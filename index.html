@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ImageForge — Конвертер изображений</title>
+<!-- ═══ ФАВИКОНКА ═══ -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%237c5cff'/><stop offset='1' stop-color='%2322d3ee'/></linearGradient></defs><rect width='64' height='64' rx='14' fill='url(%23g)'/><rect x='10' y='14' width='30' height='24' rx='3' fill='white' opacity='0.95'/><circle cx='17' cy='21' r='2.5' fill='%237c5cff'/><path d='M10 34 L20 24 L28 32 L34 26 L40 34 Z' fill='%2322d3ee'/><path d='M44 22 L54 22 M50 18 L54 22 L50 26' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M54 42 L44 42 M48 38 L44 42 L48 46' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none' opacity='0.7'/></svg>" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css" />
 <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.js"></script>
@@ -42,7 +44,7 @@
   .dropzone svg { width: 44px; height: 44px; color: var(--accent); margin-bottom: 10px; }
   .dropzone .title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
   .dropzone .sub { color: var(--muted); font-size: 13px; }
-  .formats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+  .formats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; }
   .format-btn {
     background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
     padding: 12px 8px; border-radius: 10px; font-family: 'JetBrains Mono', monospace;
@@ -123,11 +125,11 @@
       </div>
       ImageForge
     </div>
-    <div class="badge">v1.3 · 5 форматов · Локально</div>
+    <div class="badge">v1.3</div>
   </header>
   <div class="hero">
     <h1>Конвертер изображений</h1>
-    <p>Быстрая и безопасная конвертация между JPG, PNG, WebP, TIFF и AVIF. HEIC поддерживается как исходный формат. Всё работает локально в браузере.</p>
+    <p>Быстрая и безопасная конвертация между JPG, PNG, WebP, TIFF, AVIF, GIF, BMP и ICO. HEIC поддерживается как исходный формат. Всё работает локально в браузере.</p>
   </div>
   <div class="grid">
     <div class="card">
@@ -135,8 +137,8 @@
       <div class="dropzone" id="dropzone">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         <div class="title">Перетащите файлы сюда</div>
-        <div class="sub">или нажмите для выбора · JPG, PNG, WebP, HEIC, TIFF, AVIF</div>
-        <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/tiff,image/avif,.jpg,.jpeg,.png,.webp,.heic,.heif,.tif,.tiff,.avif" hidden />
+        <div class="sub">или нажмите для выбора · JPG, PNG, WebP, HEIC, TIFF, AVIF, GIF, BMP, ICO</div>
+        <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/tiff,image/avif,image/gif,image/bmp,image/vnd.microsoft.icon,image/x-icon,.jpg,.jpeg,.png,.webp,.heic,.heif,.tif,.tiff,.avif,.gif,.bmp,.ico" hidden />
       </div>
       <h2 style="margin-top:22px;">2. Выберите формат</h2>
       <div class="formats" id="formats">
@@ -145,6 +147,9 @@
         <button class="format-btn active" data-format="webp">WebP</button>
         <button class="format-btn" data-format="tiff">TIFF</button>
         <button class="format-btn" data-format="avif" id="avifBtn">AVIF</button>
+        <button class="format-btn" data-format="gif">GIF</button>
+        <button class="format-btn" data-format="bmp">BMP</button>
+        <button class="format-btn" data-format="ico">ICO</button>
       </div>
       <div class="quality-row">
         <label>Качество</label>
@@ -204,36 +209,21 @@
   const formatBtns = document.querySelectorAll('.format-btn');
 
   let files = [], selectedFormat = 'webp', idCounter = 0;
-  let avifNativeSupported = false; // ИСТИННАЯ поддержка — проверяется по MIME-типу
-  let avifWasmModule = null;
-  let avifWasmLoading = false;
-  let avifWasmFailed = false;
+  let avifNativeSupported = false;
+  let avifWasmModule = null, avifWasmLoading = false, avifWasmFailed = false;
+  let gifEncoderModule = null, gifEncoderLoading = false;
 
-  // ═══════════════════════════════════════════════════════════
-  //  ПРАВИЛЬНАЯ ПРОВЕРКА ПОДДЕРЖКИ AVIF
-  //  Браузер может вернуть blob с типом 'image/png' вместо 'image/avif',
-  //  если AVIF не поддерживается. Нужно проверять именно MIME-тип.
-  // ═══════════════════════════════════════════════════════════
+  // ═══ Проверка AVIF ═══
   const checkAvifNativeSupport = () => new Promise((resolve) => {
     try {
       const c = document.createElement('canvas');
       c.width = 16; c.height = 16;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#ff0000';
-      ctx.fillRect(0, 0, 16, 16);
-      c.toBlob((b) => {
-        // КЛЮЧЕВАЯ ПРОВЕРКА: blob должен существовать И иметь тип 'image/avif'
-        const supported = !!b && b.type === 'image/avif';
-        console.log('[AVIF] Native support check:', supported, 'blob.type =', b?.type);
-        resolve(supported);
-      }, 'image/avif', 0.5);
-    } catch (e) {
-      console.warn('[AVIF] Check error:', e);
-      resolve(false);
-    }
+      c.getContext('2d').fillRect(0, 0, 16, 16);
+      c.toBlob((b) => resolve(!!b && b.type === 'image/avif'), 'image/avif', 0.5);
+    } catch (e) { resolve(false); }
   });
 
-  // ─── Загрузка WASM-кодера AVIF (fallback) ───
+  // ═══ Загрузка AVIF WASM ═══
   const loadAvifWasm = async () => {
     if (avifWasmModule) return avifWasmModule;
     if (avifWasmFailed) throw new Error('WASM-кодер AVIF недоступен');
@@ -244,20 +234,135 @@
     }
     avifWasmLoading = true;
     try {
-      const mod = await import('https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/+esm');
-      avifWasmModule = mod;
+      avifWasmModule = await import('https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/+esm');
       avifWasmLoading = false;
-      console.log('[AVIF] WASM encoder loaded');
-      return mod;
+      return avifWasmModule;
     } catch (e) {
-      avifWasmLoading = false;
-      avifWasmFailed = true;
-      console.error('[AVIF] WASM load failed:', e);
-      throw new Error('Не удалось загрузить AVIF-кодер: ' + e.message);
+      avifWasmLoading = false; avifWasmFailed = true;
+      throw new Error('Не удалось загрузить AVIF-кодер');
     }
   };
 
-  // ─── Утилиты ───
+  // ═══ Загрузка GIF-кодера (gifenc) ═══
+  const loadGifEncoder = async () => {
+    if (gifEncoderModule) return gifEncoderModule;
+    if (gifEncoderLoading) {
+      while (gifEncoderLoading) await new Promise(r => setTimeout(r, 100));
+      return gifEncoderModule;
+    }
+    gifEncoderLoading = true;
+    try {
+      gifEncoderModule = await import('https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js');
+      gifEncoderLoading = false;
+      return gifEncoderModule;
+    } catch (e) {
+      gifEncoderLoading = false;
+      throw new Error('Не удалось загрузить GIF-кодер');
+    }
+  };
+
+  // ═══ BMP энкодер (24-бит, без сжатия) ═══
+  const encodeBMP = (imageData) => {
+    const { data, width, height } = imageData;
+    const rowSize = Math.ceil((width * 3) / 4) * 4; // padding до 4 байт
+    const pixelArraySize = rowSize * height;
+    const fileSize = 14 + 40 + pixelArraySize;
+    const buffer = new ArrayBuffer(fileSize);
+    const view = new DataView(buffer);
+
+    // File header (14 байт)
+    view.setUint8(0, 0x42); view.setUint8(1, 0x4D); // 'BM'
+    view.setUint32(2, fileSize, true);
+    view.setUint32(10, 14 + 40, true); // offset до пикселей
+
+    // DIB header (BITMAPINFOHEADER, 40 байт)
+    view.setUint32(14, 40, true);
+    view.setInt32(18, width, true);
+    view.setInt32(22, height, true); // положительный = bottom-up
+    view.setUint16(26, 1, true); // planes
+    view.setUint16(28, 24, true); // bits per pixel
+    view.setUint32(34, pixelArraySize, true);
+
+    // Пиксели (BGR, bottom-up)
+    const pixels = new Uint8Array(buffer, 54);
+    for (let y = 0; y < height; y++) {
+      const srcRow = height - 1 - y; // BMP хранит снизу вверх
+      const srcOffset = srcRow * width * 4;
+      const dstOffset = y * rowSize;
+      for (let x = 0; x < width; x++) {
+        const si = srcOffset + x * 4;
+        const di = dstOffset + x * 3;
+        pixels[di]     = data[si + 2]; // B
+        pixels[di + 1] = data[si + 1]; // G
+        pixels[di + 2] = data[si];     // R
+      }
+    }
+    return new Blob([buffer], { type: 'image/bmp' });
+  };
+
+  // ═══ ICO энкодер (PNG в ICO-контейнере) ═══
+  const encodeICO = async (canvas) => {
+    // ICO обычно до 256x256. Если больше — уменьшаем
+    const MAX = 256;
+    let srcCanvas = canvas;
+    if (canvas.width > MAX || canvas.height > MAX) {
+      const ratio = Math.min(MAX / canvas.width, MAX / canvas.height);
+      const w = Math.max(1, Math.round(canvas.width * ratio));
+      const h = Math.max(1, Math.round(canvas.height * ratio));
+      const tmp = document.createElement('canvas');
+      tmp.width = w; tmp.height = h;
+      tmp.getContext('2d').drawImage(canvas, 0, 0, w, h);
+      srcCanvas = tmp;
+    }
+
+    // Кодируем в PNG
+    const pngBlob = await new Promise(res => srcCanvas.toBlob(res, 'image/png'));
+    const pngBuffer = await pngBlob.arrayBuffer();
+    const pngBytes = new Uint8Array(pngBuffer);
+
+    // ICO заголовок: 6 байт + 16 байт на запись + PNG данные
+    const icoSize = 6 + 16 + pngBytes.length;
+    const icoBuffer = new ArrayBuffer(icoSize);
+    const view = new DataView(icoBuffer);
+    const bytes = new Uint8Array(icoBuffer);
+
+    // ICONDIR
+    view.setUint16(0, 0, true);     // reserved
+    view.setUint16(2, 1, true);     // type = 1 (ICO)
+    view.setUint16(4, 1, true);     // count = 1
+
+    // ICONDIRENTRY
+    const w = srcCanvas.width, h = srcCanvas.height;
+    view.setUint8(6,  w >= 256 ? 0 : w);   // 0 = 256
+    view.setUint8(7,  h >= 256 ? 0 : h);
+    view.setUint8(8,  0);         // color palette
+    view.setUint8(9,  0);         // reserved
+    view.setUint16(10, 1, true);  // planes
+    view.setUint16(12, 32, true); // bits per pixel
+    view.setUint32(14, pngBytes.length, true); // size of image data
+    view.setUint32(18, 22, true); // offset (6 + 16)
+
+    // PNG данные
+    bytes.set(pngBytes, 22);
+
+    return new Blob([icoBuffer], { type: 'image/x-icon' });
+  };
+
+  // ═══ GIF энкодер (через gifenc) ═══
+  const encodeGIF = async (imageData) => {
+    const gifenc = await loadGifEncoder();
+    const { GIFEncoder, quantize, applyPalette } = gifenc;
+    const gif = GIFEncoder();
+    // quantize ожидает Uint8ClampedArray RGBA
+    const palette = quantize(imageData.data, 256);
+    const index = applyPalette(imageData.data, palette, 'rgb');
+    gif.writeFrame(index, imageData.width, imageData.height, { palette, repeat: 0 });
+    gif.finish();
+    const buffer = gif.bytes();
+    return new Blob([buffer], { type: 'image/gif' });
+  };
+
+  // ═══ Утилиты ═══
   const fmtSize = (b) => b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(2)+' MB';
   const getExt = (n) => { const i = n.lastIndexOf('.'); return i >= 0 ? n.substring(i+1).toLowerCase() : ''; };
 
@@ -282,24 +387,26 @@
 
   const updateFormatNote = () => {
     formatNote.classList.remove('show', 'info');
-    if (selectedFormat === 'avif') {
-      if (avifNativeSupported) {
-        formatNote.textContent = 'ℹ️ AVIF кодируется нативно вашим браузером (быстро).';
-        formatNote.classList.add('show', 'info');
-      } else if (avifWasmFailed) {
-        formatNote.textContent = '⚠️ AVIF недоступен: ни нативная поддержка, ни WASM-кодер не работают.';
-        formatNote.classList.add('show');
-      } else {
-        formatNote.textContent = 'ℹ️ Ваш браузер не поддерживает AVIF нативно — используется WASM-кодер (может быть медленнее).';
-        formatNote.classList.add('show');
-      }
-    } else if (selectedFormat === 'tiff') {
-      formatNote.textContent = 'ℹ️ TIFF сохраняет без потерь. Файлы могут быть большими.';
-      formatNote.classList.add('show', 'info');
+    const notes = {
+      avif: avifNativeSupported
+        ? 'ℹ️ AVIF кодируется нативно вашим браузером (быстро).'
+        : avifWasmFailed
+          ? '⚠️ AVIF недоступен в этом браузере.'
+          : 'ℹ️ Ваш браузер не поддерживает AVIF нативно — используется WASM-кодер.',
+      tiff: 'ℹ️ TIFF сохраняет без потерь. Файлы могут быть большими.',
+      gif: 'ℹ️ GIF поддерживает до 256 цветов. Для фотографий качество может снизиться.',
+      bmp: 'ℹ️ BMP сохраняет без сжатия. Файлы будут большими.',
+      ico: 'ℹ️ ICO создаёт иконку 256×256 из PNG-данных.'
+    };
+    if (notes[selectedFormat]) {
+      formatNote.textContent = notes[selectedFormat];
+      formatNote.classList.add('show');
+      if (selectedFormat === 'avif' && avifNativeSupported) formatNote.classList.add('info');
+      if (selectedFormat === 'tiff') formatNote.classList.add('info');
     }
   };
 
-  // ─── Скачивание ───
+  // ═══ Скачивание ═══
   const triggerDownload = (blob, filename) => {
     if (!blob || blob.size === 0) throw new Error('Пустой файл');
     const url = URL.createObjectURL(blob);
@@ -321,12 +428,11 @@
       triggerDownload(f.output, f.outputName || 'converted');
       showToast(`✓ ${f.outputName}`, 'success');
     } catch (err) {
-      console.error('Download error:', err);
       showToast('Ошибка скачивания: ' + err.message, 'error');
     }
   };
 
-  // ─── Рендер ───
+  // ═══ Рендер ═══
   const renderFiles = () => {
     fileList.innerHTML = '';
     if (!files.length) { fileList.appendChild(emptyState); updateStats(); updateButtons(); return; }
@@ -382,7 +488,7 @@
     renderFiles();
   };
 
-  // ─── TIFF декодер ───
+  // ═══ TIFF декодер ═══
   const decodeTiffToBlob = async (file) => {
     const buffer = await file.arrayBuffer();
     const ifds = UTIF.decode(buffer);
@@ -401,10 +507,10 @@
     });
   };
 
-  // ─── Загрузка файлов ───
+  // ═══ Загрузка файлов ═══
   const addFiles = async (fileArr) => {
-    const validTypes = ['image/jpeg','image/png','image/webp','image/heic','image/heif','image/tiff','image/avif'];
-    const validExts = ['jpg','jpeg','png','webp','heic','heif','tif','tiff','avif'];
+    const validTypes = ['image/jpeg','image/png','image/webp','image/heic','image/heif','image/tiff','image/avif','image/gif','image/bmp','image/x-icon','image/vnd.microsoft.icon'];
+    const validExts = ['jpg','jpeg','png','webp','heic','heif','tif','tiff','avif','gif','bmp','ico'];
     let added = 0;
     for (const file of fileArr) {
       const ext = getExt(file.name);
@@ -425,6 +531,30 @@
           const rb = await decodeTiffToBlob(file);
           entry.thumbUrl = URL.createObjectURL(rb);
           entry._decodedBlob = rb;
+        } else if (ext === 'ico') {
+          // ICO может содержать несколько изображений. Берём первое как PNG
+          try {
+            const buf = await file.arrayBuffer();
+            const view = new DataView(buf);
+            const count = view.getUint16(4, true);
+            if (count > 0) {
+              const size = view.getUint32(14, true);
+              const offset = view.getUint32(18, true);
+              const imgData = new Uint8Array(buf, offset, size);
+              // Проверяем, PNG ли это
+              if (imgData[0] === 0x89 && imgData[1] === 0x50) {
+                const blob = new Blob([imgData], { type: 'image/png' });
+                entry.thumbUrl = URL.createObjectURL(blob);
+                entry._decodedBlob = blob;
+              } else {
+                entry.thumbUrl = URL.createObjectURL(file);
+              }
+            } else {
+              entry.thumbUrl = URL.createObjectURL(file);
+            }
+          } catch (e) {
+            entry.thumbUrl = URL.createObjectURL(file);
+          }
         } else {
           entry.thumbUrl = URL.createObjectURL(file);
         }
@@ -441,9 +571,6 @@
     img.src = URL.createObjectURL(blob);
   });
 
-  // ═══════════════════════════════════════════════════════════
-  //  ПОЛУЧЕНИЕ ImageData из source blob (единая функция)
-  // ═══════════════════════════════════════════════════════════
   const getImageDataFromBlob = async (sourceBlob) => {
     const img = await loadImageFromBlob(sourceBlob);
     const canvas = document.createElement('canvas');
@@ -454,13 +581,11 @@
     URL.revokeObjectURL(img.src);
     return {
       imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
-      width: canvas.width,
-      height: canvas.height,
       canvas
     };
   };
 
-  // ─── Конвертация ───
+  // ═══ Конвертация ═══
   const convertFile = async (entry) => {
     const quality = parseInt(qualityInput.value) / 100;
     const baseName = entry.name.substring(0, entry.name.lastIndexOf('.')) || entry.name;
@@ -480,8 +605,6 @@
       let outputBlob;
 
       if (selectedFormat === 'tiff') {
-        const { imageData, width, height } = await getImageDataFromBlob(sourceBlob);
-        // Белый фон (TIFF не поддерживает прозрачность)
         const img = await loadImageFromBlob(sourceBlob);
         const canvas = document.createElement('canvas');
         canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
@@ -489,43 +612,50 @@
         ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(img.src);
-        const whiteBgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        outputBlob = new Blob([UTIF.encodeImage(whiteBgData.data, canvas.width, canvas.height)], { type: 'image/tiff' });
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        outputBlob = new Blob([UTIF.encodeImage(imageData.data, canvas.width, canvas.height)], { type: 'image/tiff' });
       } else if (selectedFormat === 'avif') {
-        const { imageData, width, height, canvas } = await getImageDataFromBlob(sourceBlob);
-
-        // Попытка 1: нативное кодирование (если поддерживается)
+        const { imageData, canvas } = await getImageDataFromBlob(sourceBlob);
         if (avifNativeSupported) {
           try {
             const nativeBlob = await new Promise((res, rej) =>
-              canvas.toBlob(b => b ? res(b) : rej(new Error('toBlob returned null')), 'image/avif', quality)
+              canvas.toBlob(b => b ? res(b) : rej(new Error('toBlob null')), 'image/avif', quality)
             );
-            // КРИТИЧЕСКАЯ ПРОВЕРКА: браузер мог вернуть PNG вместо AVIF
             if (nativeBlob && nativeBlob.type === 'image/avif') {
               outputBlob = nativeBlob;
-              console.log('[AVIF] Native encoding OK, size:', nativeBlob.size);
             } else {
-              console.warn('[AVIF] Native returned wrong MIME:', nativeBlob?.type, '— falling back to WASM');
-              avifNativeSupported = false; // отключаем нативную поддержку на будущее
-              throw new Error('Native encoder returned ' + nativeBlob?.type);
+              avifNativeSupported = false;
+              throw new Error('Native returned ' + nativeBlob?.type);
             }
-          } catch (nativeErr) {
-            console.warn('[AVIF] Native failed:', nativeErr.message);
-            // Переходим к WASM
-          }
+          } catch (e) { /* fallback to WASM */ }
         }
-
-        // Попытка 2: WASM fallback
         if (!outputBlob) {
           showToast('Используется WASM-кодер AVIF...', 'warn');
           const avif = await loadAvifWasm();
-          const buffer = await avif.encode(imageData, {
-            quality: Math.round(quality * 100),
-            effort: 4
-          });
+          const buffer = await avif.encode(imageData, { quality: Math.round(quality * 100), effort: 4 });
           outputBlob = new Blob([buffer], { type: 'image/avif' });
-          console.log('[AVIF] WASM encoding OK, size:', outputBlob.size);
         }
+      } else if (selectedFormat === 'gif') {
+        const { imageData } = await getImageDataFromBlob(sourceBlob);
+        outputBlob = await encodeGIF(imageData);
+      } else if (selectedFormat === 'bmp') {
+        const img = await loadImageFromBlob(sourceBlob);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(img.src);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        outputBlob = encodeBMP(imageData);
+      } else if (selectedFormat === 'ico') {
+        const img = await loadImageFromBlob(sourceBlob);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(img.src);
+        outputBlob = await encodeICO(canvas);
       } else {
         // JPG / PNG / WebP
         const img = await loadImageFromBlob(sourceBlob);
@@ -589,7 +719,7 @@
     renderFiles();
   };
 
-  // ─── События ───
+  // ═══ События ═══
   dropzone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', e => { if (e.target.files.length) addFiles(Array.from(e.target.files)); fileInput.value = ''; });
   ['dragenter','dragover'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('drag'); }));
@@ -614,17 +744,11 @@
   window.addEventListener('dragover', e => e.preventDefault());
   window.addEventListener('drop', e => e.preventDefault());
 
-  // ─── Инициализация ───
+  // ═══ Инициализация ═══
   (async () => {
     avifNativeSupported = await checkAvifNativeSupport();
-    console.log('[AVIF] Native supported:', avifNativeSupported);
     if (!avifNativeSupported) {
-      // Предзагружаем WASM-кодер
-      loadAvifWasm().catch(e => {
-        console.warn('[AVIF] WASM preload failed:', e);
-        avifWasmFailed = true;
-        updateFormatNote();
-      });
+      loadAvifWasm().catch(() => { avifWasmFailed = true; updateFormatNote(); });
     }
     updateFormatNote();
     renderFiles();
@@ -633,3 +757,4 @@
 </script>
 </body>
 </html>
+
