@@ -4,8 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ImageForge — Конвертер изображений</title>
-<!-- ═══ ФАВИКОНКА ═══ -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%237c5cff'/><stop offset='1' stop-color='%2322d3ee'/></linearGradient></defs><rect width='64' height='64' rx='14' fill='url(%23g)'/><rect x='10' y='14' width='30' height='24' rx='3' fill='white' opacity='0.95'/><circle cx='17' cy='21' r='2.5' fill='%237c5cff'/><path d='M10 34 L20 24 L28 32 L34 26 L40 34 Z' fill='%2322d3ee'/><path d='M44 22 L54 22 M50 18 L54 22 L50 26' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M54 42 L44 42 M48 38 L44 42 L48 46' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' fill='none' opacity='0.7'/></svg>" />
+<!-- ═══ ФАВИКОНКА (та же, что и логотип) ═══ -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%237c5cff'/><stop offset='1' stop-color='%2322d3ee'/></linearGradient></defs><rect width='64' height='64' rx='14' fill='url(%23g)'/><g transform='translate(14,14) scale(1.5)' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='3'/><circle cx='9' cy='9' r='2'/><path d='M21 15l-5-5L5 21'/></g></svg>" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css" />
 <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.js"></script>
@@ -19,14 +19,46 @@
     --danger: #ef4444; --warn: #f59e0b;
   }
   html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-  body {
+  body { position: relative; min-height: 100vh; }
+  body::before {
+    content: '';
+    position: fixed;
+    top: -25%; left: -25%;
+    width: 150%; height: 150%;
     background:
-      radial-gradient(1200px 600px at 10% -10%, rgba(124,92,255,0.18), transparent 60%),
-      radial-gradient(900px 500px at 100% 0%, rgba(34,211,238,0.12), transparent 60%),
-      var(--bg);
-    min-height: 100vh;
+      radial-gradient(1200px 600px at 10% -10%, rgba(124,92,255,0.22), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(34,211,238,0.16), transparent 60%),
+      radial-gradient(800px 600px at 50% 100%, rgba(124,92,255,0.12), transparent 60%);
+    animation: bgDrift 22s ease-in-out infinite alternate;
+    z-index: -1;
+    pointer-events: none;
+    will-change: transform;
   }
-  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
+  body::after {
+    content: '';
+    position: fixed;
+    top: -25%; left: -25%;
+    width: 150%; height: 150%;
+    background:
+      radial-gradient(600px 400px at 30% 50%, rgba(34,211,238,0.10), transparent 60%),
+      radial-gradient(700px 500px at 80% 70%, rgba(124,92,255,0.10), transparent 60%);
+    animation: bgDrift2 28s ease-in-out infinite alternate;
+    z-index: -1;
+    pointer-events: none;
+    will-change: transform;
+  }
+  @keyframes bgDrift {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+    33%  { transform: translate(4%, -3%) rotate(2deg) scale(1.05); }
+    66%  { transform: translate(-3%, 4%) rotate(-1deg) scale(1.03); }
+    100% { transform: translate(2%, 2%) rotate(1deg) scale(1.06); }
+  }
+  @keyframes bgDrift2 {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(-5%, 3%) scale(1.08); }
+    100% { transform: translate(3%, -4%) scale(1.04); }
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; position: relative; }
   header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
   .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
   .logo-mark { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; box-shadow: 0 8px 24px rgba(124,92,255,0.35); }
@@ -53,10 +85,16 @@
   }
   .format-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
   .format-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: white; box-shadow: 0 6px 18px rgba(124,92,255,0.35); }
-  .quality-row { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
-  .quality-row label { font-size: 13px; color: var(--muted); min-width: 70px; }
-  .quality-row input[type="range"] { flex: 1; accent-color: var(--accent); }
-  .quality-row .val { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text); min-width: 40px; text-align: right; }
+  .quality-row, .ico-size-row { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
+  .quality-row label, .ico-size-row label { font-size: 13px; color: var(--muted); min-width: 100px; }
+  .quality-row input[type="range"], .ico-size-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+  .quality-row .val, .ico-size-row .val { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text); min-width: 70px; text-align: right; }
+  .ico-size-row { display: none; animation: slideDown 0.25s ease; }
+  .ico-size-row.show { display: flex; }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
   .actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
   .btn { flex: 1; min-width: 140px; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
   .btn:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-1px); }
@@ -68,8 +106,41 @@
   .file-list::-webkit-scrollbar { width: 8px; }
   .file-list::-webkit-scrollbar-track { background: transparent; }
   .file-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-  .file-item { display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; transition: all 0.15s ease; }
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease,
+      max-height 0.35s ease,
+      padding 0.35s ease,
+      margin 0.35s ease,
+      border-width 0.35s ease;
+    max-height: 200px;
+    overflow: hidden;
+    animation: fileAppear 0.35s ease;
+  }
+  @keyframes fileAppear {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
   .file-item:hover { border-color: #353c4f; }
+  .file-item.removing {
+    opacity: 0;
+    transform: translateX(40px) scale(0.95);
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: -8px;
+    margin-bottom: -8px;
+    border-width: 0;
+    pointer-events: none;
+  }
   .thumb { width: 44px; height: 44px; border-radius: 8px; background: #0b0d12; flex-shrink: 0; overflow: hidden; display: grid; place-items: center; }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
   .file-info { flex: 1; min-width: 0; }
@@ -137,7 +208,7 @@
       <div class="dropzone" id="dropzone">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         <div class="title">Перетащите файлы сюда</div>
-        <div class="sub">или нажмите для выбора · JPG, PNG, WebP, HEIC, TIFF, AVIF, GIF, BMP, ICO</div>
+        <div class="sub">или нажмите для выбора</div>
         <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/tiff,image/avif,image/gif,image/bmp,image/vnd.microsoft.icon,image/x-icon,.jpg,.jpeg,.png,.webp,.heic,.heif,.tif,.tiff,.avif,.gif,.bmp,.ico" hidden />
       </div>
       <h2 style="margin-top:22px;">2. Выберите формат</h2>
@@ -155,6 +226,11 @@
         <label>Качество</label>
         <input type="range" id="quality" min="10" max="100" value="85" />
         <span class="val" id="qualityVal">85%</span>
+      </div>
+      <div class="ico-size-row" id="icoSizeRow">
+        <label>Размер иконки</label>
+        <input type="range" id="icoSize" min="16" max="256" step="16" value="256" />
+        <span class="val" id="icoSizeVal">256×256</span>
       </div>
       <div class="format-note" id="formatNote"></div>
       <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
@@ -205,6 +281,7 @@
   const convertBtn = $('convertBtn'), downloadAllBtn = $('downloadAllBtn'), clearBtn = $('clearBtn');
   const progressBar = $('progressBar'), progressFill = $('progressFill');
   const formatNote = $('formatNote'), avifBtn = $('avifBtn');
+  const icoSizeRow = $('icoSizeRow'), icoSizeInput = $('icoSize'), icoSizeVal = $('icoSizeVal');
   const toast = $('toast'), toastText = toast.querySelector('.toast-text');
   const formatBtns = document.querySelectorAll('.format-btn');
 
@@ -213,7 +290,6 @@
   let avifWasmModule = null, avifWasmLoading = false, avifWasmFailed = false;
   let gifEncoderModule = null, gifEncoderLoading = false;
 
-  // ═══ Проверка AVIF ═══
   const checkAvifNativeSupport = () => new Promise((resolve) => {
     try {
       const c = document.createElement('canvas');
@@ -223,7 +299,6 @@
     } catch (e) { resolve(false); }
   });
 
-  // ═══ Загрузка AVIF WASM ═══
   const loadAvifWasm = async () => {
     if (avifWasmModule) return avifWasmModule;
     if (avifWasmFailed) throw new Error('WASM-кодер AVIF недоступен');
@@ -243,7 +318,6 @@
     }
   };
 
-  // ═══ Загрузка GIF-кодера (gifenc) ═══
   const loadGifEncoder = async () => {
     if (gifEncoderModule) return gifEncoderModule;
     if (gifEncoderLoading) {
@@ -261,108 +335,81 @@
     }
   };
 
-  // ═══ BMP энкодер (24-бит, без сжатия) ═══
   const encodeBMP = (imageData) => {
     const { data, width, height } = imageData;
-    const rowSize = Math.ceil((width * 3) / 4) * 4; // padding до 4 байт
+    const rowSize = Math.ceil((width * 3) / 4) * 4;
     const pixelArraySize = rowSize * height;
     const fileSize = 14 + 40 + pixelArraySize;
     const buffer = new ArrayBuffer(fileSize);
     const view = new DataView(buffer);
-
-    // File header (14 байт)
-    view.setUint8(0, 0x42); view.setUint8(1, 0x4D); // 'BM'
+    view.setUint8(0, 0x42); view.setUint8(1, 0x4D);
     view.setUint32(2, fileSize, true);
-    view.setUint32(10, 14 + 40, true); // offset до пикселей
-
-    // DIB header (BITMAPINFOHEADER, 40 байт)
+    view.setUint32(10, 14 + 40, true);
     view.setUint32(14, 40, true);
     view.setInt32(18, width, true);
-    view.setInt32(22, height, true); // положительный = bottom-up
-    view.setUint16(26, 1, true); // planes
-    view.setUint16(28, 24, true); // bits per pixel
+    view.setInt32(22, height, true);
+    view.setUint16(26, 1, true);
+    view.setUint16(28, 24, true);
     view.setUint32(34, pixelArraySize, true);
-
-    // Пиксели (BGR, bottom-up)
     const pixels = new Uint8Array(buffer, 54);
     for (let y = 0; y < height; y++) {
-      const srcRow = height - 1 - y; // BMP хранит снизу вверх
+      const srcRow = height - 1 - y;
       const srcOffset = srcRow * width * 4;
       const dstOffset = y * rowSize;
       for (let x = 0; x < width; x++) {
         const si = srcOffset + x * 4;
         const di = dstOffset + x * 3;
-        pixels[di]     = data[si + 2]; // B
-        pixels[di + 1] = data[si + 1]; // G
-        pixels[di + 2] = data[si];     // R
+        pixels[di]     = data[si + 2];
+        pixels[di + 1] = data[si + 1];
+        pixels[di + 2] = data[si];
       }
     }
     return new Blob([buffer], { type: 'image/bmp' });
   };
 
-  // ═══ ICO энкодер (PNG в ICO-контейнере) ═══
-  const encodeICO = async (canvas) => {
-    // ICO обычно до 256x256. Если больше — уменьшаем
-    const MAX = 256;
+  const encodeICO = async (canvas, targetSize = 256) => {
+    const MAX = targetSize;
     let srcCanvas = canvas;
-    if (canvas.width > MAX || canvas.height > MAX) {
-      const ratio = Math.min(MAX / canvas.width, MAX / canvas.height);
-      const w = Math.max(1, Math.round(canvas.width * ratio));
-      const h = Math.max(1, Math.round(canvas.height * ratio));
+    if (canvas.width !== MAX || canvas.height !== MAX) {
       const tmp = document.createElement('canvas');
-      tmp.width = w; tmp.height = h;
-      tmp.getContext('2d').drawImage(canvas, 0, 0, w, h);
+      tmp.width = MAX; tmp.height = MAX;
+      tmp.getContext('2d').drawImage(canvas, 0, 0, MAX, MAX);
       srcCanvas = tmp;
     }
-
-    // Кодируем в PNG
     const pngBlob = await new Promise(res => srcCanvas.toBlob(res, 'image/png'));
     const pngBuffer = await pngBlob.arrayBuffer();
     const pngBytes = new Uint8Array(pngBuffer);
-
-    // ICO заголовок: 6 байт + 16 байт на запись + PNG данные
     const icoSize = 6 + 16 + pngBytes.length;
     const icoBuffer = new ArrayBuffer(icoSize);
     const view = new DataView(icoBuffer);
     const bytes = new Uint8Array(icoBuffer);
-
-    // ICONDIR
-    view.setUint16(0, 0, true);     // reserved
-    view.setUint16(2, 1, true);     // type = 1 (ICO)
-    view.setUint16(4, 1, true);     // count = 1
-
-    // ICONDIRENTRY
+    view.setUint16(0, 0, true);
+    view.setUint16(2, 1, true);
+    view.setUint16(4, 1, true);
     const w = srcCanvas.width, h = srcCanvas.height;
-    view.setUint8(6,  w >= 256 ? 0 : w);   // 0 = 256
+    view.setUint8(6,  w >= 256 ? 0 : w);
     view.setUint8(7,  h >= 256 ? 0 : h);
-    view.setUint8(8,  0);         // color palette
-    view.setUint8(9,  0);         // reserved
-    view.setUint16(10, 1, true);  // planes
-    view.setUint16(12, 32, true); // bits per pixel
-    view.setUint32(14, pngBytes.length, true); // size of image data
-    view.setUint32(18, 22, true); // offset (6 + 16)
-
-    // PNG данные
+    view.setUint8(8,  0);
+    view.setUint8(9,  0);
+    view.setUint16(10, 1, true);
+    view.setUint16(12, 32, true);
+    view.setUint32(14, pngBytes.length, true);
+    view.setUint32(18, 22, true);
     bytes.set(pngBytes, 22);
-
     return new Blob([icoBuffer], { type: 'image/x-icon' });
   };
 
-  // ═══ GIF энкодер (через gifenc) ═══
   const encodeGIF = async (imageData) => {
     const gifenc = await loadGifEncoder();
     const { GIFEncoder, quantize, applyPalette } = gifenc;
     const gif = GIFEncoder();
-    // quantize ожидает Uint8ClampedArray RGBA
     const palette = quantize(imageData.data, 256);
     const index = applyPalette(imageData.data, palette, 'rgb');
     gif.writeFrame(index, imageData.width, imageData.height, { palette, repeat: 0 });
     gif.finish();
-    const buffer = gif.bytes();
-    return new Blob([buffer], { type: 'image/gif' });
+    return new Blob([gif.bytes()], { type: 'image/gif' });
   };
 
-  // ═══ Утилиты ═══
   const fmtSize = (b) => b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(2)+' MB';
   const getExt = (n) => { const i = n.lastIndexOf('.'); return i >= 0 ? n.substring(i+1).toLowerCase() : ''; };
 
@@ -396,7 +443,7 @@
       tiff: 'ℹ️ TIFF сохраняет без потерь. Файлы могут быть большими.',
       gif: 'ℹ️ GIF поддерживает до 256 цветов. Для фотографий качество может снизиться.',
       bmp: 'ℹ️ BMP сохраняет без сжатия. Файлы будут большими.',
-      ico: 'ℹ️ ICO создаёт иконку 256×256 из PNG-данных.'
+      ico: `ℹ️ ICO создаёт иконку ${icoSizeInput.value}×${icoSizeInput.value} из PNG-данных.`
     };
     if (notes[selectedFormat]) {
       formatNote.textContent = notes[selectedFormat];
@@ -404,9 +451,9 @@
       if (selectedFormat === 'avif' && avifNativeSupported) formatNote.classList.add('info');
       if (selectedFormat === 'tiff') formatNote.classList.add('info');
     }
+    icoSizeRow.classList.toggle('show', selectedFormat === 'ico');
   };
 
-  // ═══ Скачивание ═══
   const triggerDownload = (blob, filename) => {
     if (!blob || blob.size === 0) throw new Error('Пустой файл');
     const url = URL.createObjectURL(blob);
@@ -432,13 +479,13 @@
     }
   };
 
-  // ═══ Рендер ═══
   const renderFiles = () => {
     fileList.innerHTML = '';
     if (!files.length) { fileList.appendChild(emptyState); updateStats(); updateButtons(); return; }
     files.forEach(f => {
       const item = document.createElement('div');
       item.className = 'file-item';
+      item.dataset.id = f.id;
       const thumb = document.createElement('div');
       thumb.className = 'thumb';
       if (f.thumbUrl) {
@@ -482,13 +529,18 @@
   };
 
   const removeFile = (id) => {
-    const f = files.find(x => x.id === id);
-    if (f?.thumbUrl) URL.revokeObjectURL(f.thumbUrl);
-    files = files.filter(x => x.id !== id);
-    renderFiles();
+    const item = fileList.querySelector(`[data-id="${id}"]`);
+    if (item && !item.classList.contains('removing')) {
+      item.classList.add('removing');
+      setTimeout(() => {
+        const f = files.find(x => x.id === id);
+        if (f?.thumbUrl) URL.revokeObjectURL(f.thumbUrl);
+        files = files.filter(x => x.id !== id);
+        renderFiles();
+      }, 350);
+    }
   };
 
-  // ═══ TIFF декодер ═══
   const decodeTiffToBlob = async (file) => {
     const buffer = await file.arrayBuffer();
     const ifds = UTIF.decode(buffer);
@@ -507,7 +559,6 @@
     });
   };
 
-  // ═══ Загрузка файлов ═══
   const addFiles = async (fileArr) => {
     const validTypes = ['image/jpeg','image/png','image/webp','image/heic','image/heif','image/tiff','image/avif','image/gif','image/bmp','image/x-icon','image/vnd.microsoft.icon'];
     const validExts = ['jpg','jpeg','png','webp','heic','heif','tif','tiff','avif','gif','bmp','ico'];
@@ -532,7 +583,6 @@
           entry.thumbUrl = URL.createObjectURL(rb);
           entry._decodedBlob = rb;
         } else if (ext === 'ico') {
-          // ICO может содержать несколько изображений. Берём первое как PNG
           try {
             const buf = await file.arrayBuffer();
             const view = new DataView(buf);
@@ -541,7 +591,6 @@
               const size = view.getUint32(14, true);
               const offset = view.getUint32(18, true);
               const imgData = new Uint8Array(buf, offset, size);
-              // Проверяем, PNG ли это
               if (imgData[0] === 0x89 && imgData[1] === 0x50) {
                 const blob = new Blob([imgData], { type: 'image/png' });
                 entry.thumbUrl = URL.createObjectURL(blob);
@@ -585,7 +634,6 @@
     };
   };
 
-  // ═══ Конвертация ═══
   const convertFile = async (entry) => {
     const quality = parseInt(qualityInput.value) / 100;
     const baseName = entry.name.substring(0, entry.name.lastIndexOf('.')) || entry.name;
@@ -649,15 +697,15 @@
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         outputBlob = encodeBMP(imageData);
       } else if (selectedFormat === 'ico') {
+        const icoSize = parseInt(icoSizeInput.value);
         const img = await loadImageFromBlob(sourceBlob);
         const canvas = document.createElement('canvas');
         canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0);
         URL.revokeObjectURL(img.src);
-        outputBlob = await encodeICO(canvas);
+        outputBlob = await encodeICO(canvas, icoSize);
       } else {
-        // JPG / PNG / WebP
         const img = await loadImageFromBlob(sourceBlob);
         const canvas = document.createElement('canvas');
         canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
@@ -714,12 +762,17 @@
   };
 
   const clearAll = () => {
-    files.forEach(f => { if (f.thumbUrl) URL.revokeObjectURL(f.thumbUrl); });
-    files = [];
-    renderFiles();
+    const items = fileList.querySelectorAll('.file-item');
+    items.forEach((item, i) => {
+      setTimeout(() => item.classList.add('removing'), i * 30);
+    });
+    setTimeout(() => {
+      files.forEach(f => { if (f.thumbUrl) URL.revokeObjectURL(f.thumbUrl); });
+      files = [];
+      renderFiles();
+    }, items.length * 30 + 350);
   };
 
-  // ═══ События ═══
   dropzone.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', e => { if (e.target.files.length) addFiles(Array.from(e.target.files)); fileInput.value = ''; });
   ['dragenter','dragover'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('drag'); }));
@@ -738,13 +791,17 @@
   }));
 
   qualityInput.addEventListener('input', () => { qualityVal.textContent = qualityInput.value + '%'; });
+  icoSizeInput.addEventListener('input', () => {
+    icoSizeVal.textContent = `${icoSizeInput.value}×${icoSizeInput.value}`;
+    updateFormatNote();
+  });
+
   convertBtn.addEventListener('click', convertAll);
   downloadAllBtn.addEventListener('click', downloadAll);
   clearBtn.addEventListener('click', clearAll);
   window.addEventListener('dragover', e => e.preventDefault());
   window.addEventListener('drop', e => e.preventDefault());
 
-  // ═══ Инициализация ═══
   (async () => {
     avifNativeSupported = await checkAvifNativeSupport();
     if (!avifNativeSupported) {
