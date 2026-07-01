@@ -123,7 +123,7 @@
       </div>
       ImageForge
     </div>
-    <div class="badge">v1.2 · 5 форматов · Локально</div>
+    <div class="badge">v1.3 · 5 форматов · Локально</div>
   </header>
   <div class="hero">
     <h1>Конвертер изображений</h1>
@@ -204,25 +204,42 @@
   const formatBtns = document.querySelectorAll('.format-btn');
 
   let files = [], selectedFormat = 'webp', idCounter = 0;
-  let avifNativeSupported = false;
-  let avifWasmModule = null; // @jsquash/avif fallback
+  let avifNativeSupported = false; // ИСТИННАЯ поддержка — проверяется по MIME-типу
+  let avifWasmModule = null;
   let avifWasmLoading = false;
+  let avifWasmFailed = false;
 
-  // ─── Проверка нативной поддержки AVIF ───
+  // ═══════════════════════════════════════════════════════════
+  //  ПРАВИЛЬНАЯ ПРОВЕРКА ПОДДЕРЖКИ AVIF
+  //  Браузер может вернуть blob с типом 'image/png' вместо 'image/avif',
+  //  если AVIF не поддерживается. Нужно проверять именно MIME-тип.
+  // ═══════════════════════════════════════════════════════════
   const checkAvifNativeSupport = () => new Promise((resolve) => {
-    const c = document.createElement('canvas');
-    c.width = 1; c.height = 1;
     try {
-      c.toBlob((b) => resolve(!!b), 'image/avif', 0.5);
-    } catch (e) { resolve(false); }
+      const c = document.createElement('canvas');
+      c.width = 16; c.height = 16;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(0, 0, 16, 16);
+      c.toBlob((b) => {
+        // КЛЮЧЕВАЯ ПРОВЕРКА: blob должен существовать И иметь тип 'image/avif'
+        const supported = !!b && b.type === 'image/avif';
+        console.log('[AVIF] Native support check:', supported, 'blob.type =', b?.type);
+        resolve(supported);
+      }, 'image/avif', 0.5);
+    } catch (e) {
+      console.warn('[AVIF] Check error:', e);
+      resolve(false);
+    }
   });
 
-  // ─── Загрузка WASM-кодера AVIF (fallback для Firefox и др.) ───
+  // ─── Загрузка WASM-кодера AVIF (fallback) ───
   const loadAvifWasm = async () => {
     if (avifWasmModule) return avifWasmModule;
+    if (avifWasmFailed) throw new Error('WASM-кодер AVIF недоступен');
     if (avifWasmLoading) {
-      // Ждём, пока другой вызов загрузит модуль
       while (avifWasmLoading) await new Promise(r => setTimeout(r, 100));
+      if (avifWasmFailed) throw new Error('WASM-кодер AVIF недоступен');
       return avifWasmModule;
     }
     avifWasmLoading = true;
@@ -230,9 +247,12 @@
       const mod = await import('https://cdn.jsdelivr.net/npm/@jsquash/avif@2.1.1/+esm');
       avifWasmModule = mod;
       avifWasmLoading = false;
+      console.log('[AVIF] WASM encoder loaded');
       return mod;
     } catch (e) {
       avifWasmLoading = false;
+      avifWasmFailed = true;
+      console.error('[AVIF] WASM load failed:', e);
       throw new Error('Не удалось загрузить AVIF-кодер: ' + e.message);
     }
   };
@@ -264,10 +284,13 @@
     formatNote.classList.remove('show', 'info');
     if (selectedFormat === 'avif') {
       if (avifNativeSupported) {
-        formatNote.textContent = 'ℹ️ AVIF кодируется нативно вашим браузером.';
+        formatNote.textContent = 'ℹ️ AVIF кодируется нативно вашим браузером (быстро).';
         formatNote.classList.add('show', 'info');
+      } else if (avifWasmFailed) {
+        formatNote.textContent = '⚠️ AVIF недоступен: ни нативная поддержка, ни WASM-кодер не работают.';
+        formatNote.classList.add('show');
       } else {
-        formatNote.textContent = 'ℹ️ Ваш браузер не поддерживает AVIF нативно — будет использован WASM-кодер (может быть медленнее).';
+        formatNote.textContent = 'ℹ️ Ваш браузер не поддерживает AVIF нативно — используется WASM-кодер (может быть медленнее).';
         formatNote.classList.add('show');
       }
     } else if (selectedFormat === 'tiff') {
@@ -418,6 +441,25 @@
     img.src = URL.createObjectURL(blob);
   });
 
+  // ═══════════════════════════════════════════════════════════
+  //  ПОЛУЧЕНИЕ ImageData из source blob (единая функция)
+  // ═══════════════════════════════════════════════════════════
+  const getImageDataFromBlob = async (sourceBlob) => {
+    const img = await loadImageFromBlob(sourceBlob);
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(img.src);
+    return {
+      imageData: ctx.getImageData(0, 0, canvas.width, canvas.height),
+      width: canvas.width,
+      height: canvas.height,
+      canvas
+    };
+  };
+
   // ─── Конвертация ───
   const convertFile = async (entry) => {
     const quality = parseInt(qualityInput.value) / 100;
@@ -438,36 +480,51 @@
       let outputBlob;
 
       if (selectedFormat === 'tiff') {
+        const { imageData, width, height } = await getImageDataFromBlob(sourceBlob);
+        // Белый фон (TIFF не поддерживает прозрачность)
         const img = await loadImageFromBlob(sourceBlob);
         const canvas = document.createElement('canvas');
         canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         URL.revokeObjectURL(img.src);
-        outputBlob = new Blob([UTIF.encodeImage(imageData.data, canvas.width, canvas.height)], { type: 'image/tiff' });
+        const whiteBgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        outputBlob = new Blob([UTIF.encodeImage(whiteBgData.data, canvas.width, canvas.height)], { type: 'image/tiff' });
       } else if (selectedFormat === 'avif') {
-        const img = await loadImageFromBlob(sourceBlob);
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        URL.revokeObjectURL(img.src);
+        const { imageData, width, height, canvas } = await getImageDataFromBlob(sourceBlob);
 
+        // Попытка 1: нативное кодирование (если поддерживается)
         if (avifNativeSupported) {
-          // Нативное кодирование через canvas
-          outputBlob = await new Promise((res, rej) => canvas.toBlob(b => b ? res(b) : rej(new Error('AVIF native failed')), 'image/avif', quality));
-        } else {
-          // WASM fallback через @jsquash/avif
-          showToast('Загрузка AVIF-кодера...', 'warn');
+          try {
+            const nativeBlob = await new Promise((res, rej) =>
+              canvas.toBlob(b => b ? res(b) : rej(new Error('toBlob returned null')), 'image/avif', quality)
+            );
+            // КРИТИЧЕСКАЯ ПРОВЕРКА: браузер мог вернуть PNG вместо AVIF
+            if (nativeBlob && nativeBlob.type === 'image/avif') {
+              outputBlob = nativeBlob;
+              console.log('[AVIF] Native encoding OK, size:', nativeBlob.size);
+            } else {
+              console.warn('[AVIF] Native returned wrong MIME:', nativeBlob?.type, '— falling back to WASM');
+              avifNativeSupported = false; // отключаем нативную поддержку на будущее
+              throw new Error('Native encoder returned ' + nativeBlob?.type);
+            }
+          } catch (nativeErr) {
+            console.warn('[AVIF] Native failed:', nativeErr.message);
+            // Переходим к WASM
+          }
+        }
+
+        // Попытка 2: WASM fallback
+        if (!outputBlob) {
+          showToast('Используется WASM-кодер AVIF...', 'warn');
           const avif = await loadAvifWasm();
           const buffer = await avif.encode(imageData, {
             quality: Math.round(quality * 100),
             effort: 4
           });
           outputBlob = new Blob([buffer], { type: 'image/avif' });
+          console.log('[AVIF] WASM encoding OK, size:', outputBlob.size);
         }
       } else {
         // JPG / PNG / WebP
@@ -540,6 +597,10 @@
   dropzone.addEventListener('drop', e => { if (e.dataTransfer?.files?.length) addFiles(Array.from(e.dataTransfer.files)); });
 
   formatBtns.forEach(btn => btn.addEventListener('click', () => {
+    if (btn.dataset.format === 'avif' && !avifNativeSupported && avifWasmFailed) {
+      showToast('AVIF недоступен в этом браузере', 'error');
+      return;
+    }
     formatBtns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     selectedFormat = btn.dataset.format;
@@ -556,9 +617,14 @@
   // ─── Инициализация ───
   (async () => {
     avifNativeSupported = await checkAvifNativeSupport();
+    console.log('[AVIF] Native supported:', avifNativeSupported);
     if (!avifNativeSupported) {
-      // Предзагружаем WASM-кодер, чтобы при первой конвертации не было задержки
-      loadAvifWasm().catch(e => console.warn('AVIF WASM preload failed:', e));
+      // Предзагружаем WASM-кодер
+      loadAvifWasm().catch(e => {
+        console.warn('[AVIF] WASM preload failed:', e);
+        avifWasmFailed = true;
+        updateFormatNote();
+      });
     }
     updateFormatNote();
     renderFiles();
