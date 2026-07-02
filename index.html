@@ -22,18 +22,52 @@
     --danger: #ef4444; --warn: #f59e0b;
   }
   html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+  /* ═══ ПУЛЬСИРУЮЩИЙ ГРАДИЕНТНЫЙ ФОН ═══ */
   body {
-    background:
-      radial-gradient(1200px 600px at 10% -10%, rgba(124,92,255,0.18), transparent 60%),
-      radial-gradient(900px 500px at 100% 0%, rgba(34,211,238,0.12), transparent 60%),
-      var(--bg);
+    background: var(--bg);
     min-height: 100vh;
+    position: relative;
   }
+  body::before {
+    content: '';
+    position: fixed;
+    top: -20%; left: -20%;
+    width: 140%; height: 140%;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(124,92,255,0.22), transparent 60%),
+      radial-gradient(800px 600px at 50% 100%, rgba(124,92,255,0.15), transparent 60%);
+    animation: pulseViolet 9s ease-in-out infinite;
+    z-index: -2;
+    pointer-events: none;
+    will-change: opacity, filter;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    top: -20%; left: -20%;
+    width: 140%; height: 140%;
+    background:
+      radial-gradient(900px 500px at 100% 0%, rgba(34,211,238,0.18), transparent 60%),
+      radial-gradient(700px 500px at 80% 70%, rgba(34,211,238,0.12), transparent 60%);
+    animation: pulseCyan 11s ease-in-out infinite;
+    z-index: -1;
+    pointer-events: none;
+    will-change: opacity, filter;
+  }
+  @keyframes pulseViolet {
+    0%, 100% { opacity: 0.85; filter: brightness(1) saturate(1); }
+    50% { opacity: 1; filter: brightness(1.25) saturate(1.15); }
+  }
+  @keyframes pulseCyan {
+    0%, 100% { opacity: 1; filter: brightness(1.1) saturate(1.1); }
+    50% { opacity: 0.75; filter: brightness(0.9) saturate(0.95); }
+  }
+
   .container { max-width: 1200px; margin: 0 auto; padding: 24px 24px 80px; position: relative; animation: fadeInUp 0.6s ease; }
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-  /* ═══ HEADER ═══ */
   header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
   .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 20px; letter-spacing: -0.01em; transition: transform 0.2s ease; }
   .logo:hover { transform: scale(1.02); }
@@ -43,7 +77,7 @@
   .badge { font-size: 12px; color: var(--muted); background: var(--panel); border: 1px solid var(--border); padding: 6px 10px; border-radius: 999px; transition: all 0.2s ease; }
   .badge:hover { border-color: var(--accent); color: var(--text); }
 
-  /* ═══ НАВИГАЦИЯ ═══ */
+  /* ═══ НАВИГАЦИЯ С АНИМИРОВАННЫМ ИНДИКАТОРОМ ═══ */
   .nav {
     display: flex;
     gap: 6px;
@@ -52,6 +86,7 @@
     border-radius: 14px;
     padding: 6px;
     margin-bottom: 28px;
+    position: relative;
     animation: fadeInUp 0.6s ease 0.1s both;
   }
   .nav-btn {
@@ -65,23 +100,43 @@
     font-weight: 600;
     cursor: pointer;
     border-radius: 10px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: color 0.25s ease, background 0.25s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     position: relative;
-    overflow: hidden;
+    z-index: 2;
   }
-  .nav-btn svg { width: 16px; height: 16px; transition: transform 0.2s ease; }
-  .nav-btn:hover { color: var(--text); background: rgba(124,92,255,0.08); }
+  .nav-btn svg { width: 16px; height: 16px; transition: transform 0.25s ease; }
+  .nav-btn:hover { color: var(--text); }
   .nav-btn:hover svg { transform: scale(1.15); }
-  .nav-btn.active {
+  .nav-btn.active { color: white; }
+
+  /* Плавающий индикатор активной вкладки */
+  .nav-indicator {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 6px;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: white;
+    border-radius: 10px;
     box-shadow: 0 6px 18px rgba(124,92,255,0.35);
+    transition:
+      left 0.5s cubic-bezier(0.68, -0.3, 0.32, 1.3),
+      width 0.5s cubic-bezier(0.68, -0.3, 0.32, 1.3),
+      transform 0.3s ease;
+    z-index: 1;
+    pointer-events: none;
   }
-  .nav-btn:active { transform: scale(0.97); }
+  .nav-indicator.bounce {
+    animation: indicatorBounce 0.5s cubic-bezier(0.68, -0.3, 0.32, 1.3);
+  }
+  @keyframes indicatorBounce {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.08, 1.15); }
+    100% { transform: scale(1); }
+  }
 
   /* ═══ СТРАНИЦЫ ═══ */
   .page { display: none; animation: pageIn 0.4s ease; }
@@ -113,12 +168,11 @@
   }
   .features {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 16px;
     margin-bottom: 32px;
     animation: fadeInUp 0.8s ease 0.3s both;
   }
-  @media (max-width: 900px) { .features { grid-template-columns: 1fr; } }
   .feature {
     background: linear-gradient(180deg, var(--panel), var(--bg-2));
     border: 1px solid var(--border);
@@ -128,14 +182,9 @@
   }
   .feature:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 12px 32px rgba(124,92,255,0.15); }
   .feature-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 48px; height: 48px; border-radius: 12px;
     background: linear-gradient(135deg, rgba(124,92,255,0.2), rgba(34,211,238,0.2));
-    display: grid;
-    place-items: center;
-    margin-bottom: 16px;
-    color: var(--accent);
+    display: grid; place-items: center; margin-bottom: 16px; color: var(--accent);
   }
   .feature-icon svg { width: 24px; height: 24px; }
   .feature h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
@@ -149,45 +198,25 @@
     margin-top: 20px;
     animation: fadeInUp 0.8s ease 0.4s both;
   }
-  .how-it-works h2 {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 24px;
-    text-align: center;
-  }
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-  }
+  .how-it-works h2 { font-size: 24px; font-weight: 700; margin-bottom: 24px; text-align: center; }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
   @media (max-width: 900px) { .steps { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 600px) { .steps { grid-template-columns: 1fr; } }
   .step { text-align: center; }
   .step-num {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 40px; height: 40px; border-radius: 50%;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: white;
-    font-weight: 700;
-    font-size: 16px;
-    display: grid;
-    place-items: center;
-    margin: 0 auto 12px;
+    color: white; font-weight: 700; font-size: 16px;
+    display: grid; place-items: center; margin: 0 auto 12px;
     box-shadow: 0 6px 18px rgba(124,92,255,0.35);
   }
   .step h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
   .step p { color: var(--muted); font-size: 13px; line-height: 1.5; }
 
   .tech-note {
-    margin-top: 32px;
-    padding: 20px 24px;
-    background: rgba(34,211,238,0.06);
-    border: 1px solid rgba(34,211,238,0.2);
-    border-radius: 12px;
-    color: var(--accent-2);
-    font-size: 14px;
-    line-height: 1.6;
+    margin-top: 32px; padding: 20px 24px;
+    background: rgba(34,211,238,0.06); border: 1px solid rgba(34,211,238,0.2);
+    border-radius: 12px; color: var(--accent-2); font-size: 14px; line-height: 1.6;
     animation: fadeInUp 0.8s ease 0.5s both;
   }
   .tech-note strong { color: var(--text); }
@@ -224,15 +253,9 @@
   .quality-row label, .ico-size-row label, .compress-row label { font-size: 13px; color: var(--muted); min-width: 110px; }
   .quality-row input[type="range"], .ico-size-row input[type="range"], .compress-row select { flex: 1; accent-color: var(--accent); }
   .compress-row select {
-    padding: 8px 12px;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 13px;
-    cursor: pointer;
-    transition: border-color 0.2s ease;
+    padding: 8px 12px; background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px;
+    cursor: pointer; transition: border-color 0.2s ease;
   }
   .compress-row select:hover { border-color: var(--accent); }
   .compress-row select:focus { outline: none; border-color: var(--accent); }
@@ -261,10 +284,10 @@
   .file-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; transition: background 0.2s ease; }
   .file-list::-webkit-scrollbar-thumb:hover { background: #353c4f; }
 
-  .file-item { display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; transition: all 0.3s ease; animation: fileAppear 0.3s ease; }
+  .file-item { display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease, border-width 0.3s ease; animation: fileAppear 0.3s ease; max-height: 200px; overflow: hidden; }
   @keyframes fileAppear { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
   .file-item:hover { border-color: #353c4f; transform: translateX(4px); }
-  .file-item.removing { opacity: 0; transform: translateX(30px) scale(0.95); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: -8px; margin-bottom: -8px; border-width: 0; pointer-events: none; }
+  .file-item.removing { opacity: 0; transform: translateX(30px) scale(0.95); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: -8px; margin-bottom: 0; border-width: 0; pointer-events: none; overflow: hidden; }
 
   .thumb { width: 44px; height: 44px; border-radius: 8px; background: #0b0d12; flex-shrink: 0; overflow: hidden; display: grid; place-items: center; transition: transform 0.2s ease; }
   .file-item:hover .thumb { transform: scale(1.05); }
@@ -318,41 +341,39 @@
   footer { text-align: center; margin-top: 40px; color: var(--muted); font-size: 12px; animation: fadeIn 1s ease 0.5s both; }
 
   /* ═══ МЕТАДАННЫЕ ═══ */
-  .meta-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
   .meta-preview { display: grid; grid-template-columns: 200px 1fr; gap: 20px; align-items: start; }
   @media (max-width: 700px) { .meta-preview { grid-template-columns: 1fr; } }
   .meta-preview-img { width: 100%; aspect-ratio: 1; background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: grid; place-items: center; }
   .meta-preview-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
-  .meta-preview-img.empty { color: var(--muted); font-size: 13px; text-align: center; padding: 20px; }
   .meta-info { display: flex; flex-direction: column; gap: 10px; }
   .meta-info-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
   .meta-info-row .k { color: var(--muted); }
   .meta-info-row .v { font-family: 'JetBrains Mono', monospace; color: var(--text); font-weight: 600; text-align: right; word-break: break-all; }
 
-  .meta-table-wrap { max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; }
+  .meta-table-wrap { max-height: 500px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; }
   .meta-table-wrap::-webkit-scrollbar { width: 8px; }
   .meta-table-wrap::-webkit-scrollbar-track { background: transparent; }
   .meta-table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
   .meta-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .meta-table thead { position: sticky; top: 0; background: var(--panel-2); z-index: 1; }
   .meta-table th { padding: 10px 12px; text-align: left; font-weight: 600; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
-  .meta-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .meta-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   .meta-table tr:last-child td { border-bottom: none; }
   .meta-table tr:hover { background: rgba(124,92,255,0.04); }
-  .meta-table .tag { font-family: 'JetBrains Mono', monospace; color: var(--accent-2); font-size: 12px; }
-  .meta-table .val-cell { color: var(--text); word-break: break-word; max-width: 400px; }
-  .meta-table .val-cell.editable { cursor: pointer; transition: background 0.15s ease; }
-  .meta-table .val-cell.editable:hover { background: rgba(124,92,255,0.1); }
-  .meta-table .edit-input { width: 100%; padding: 4px 8px; background: var(--bg-2); border: 1px solid var(--accent); border-radius: 4px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-  .meta-table .edit-input:focus { outline: none; }
+  .meta-table .tag { font-family: 'JetBrains Mono', monospace; color: var(--accent-2); font-size: 12px; word-break: break-word; }
+  .meta-table .val-cell { color: var(--text); word-break: break-word; max-width: 500px; }
+  .meta-table .edit-input {
+    width: 100%; padding: 6px 10px; background: var(--bg-2);
+    border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .meta-table .edit-input:hover { border-color: var(--accent); }
+  .meta-table .edit-input:focus { outline: none; border-color: var(--accent); background: var(--panel-2); box-shadow: 0 0 0 2px rgba(124,92,255,0.2); }
   .meta-section-header { background: var(--panel-2); padding: 8px 12px; font-weight: 600; color: var(--accent); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
-
   .meta-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
 
   /* ═══ СЖАТИЕ ═══ */
-  .compress-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
-  .compress-result { display: none; animation: fadeIn 0.4s ease; }
-  .compress-result.show { display: block; }
   .compress-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
   @media (max-width: 700px) { .compress-stats { grid-template-columns: 1fr; } }
   .compress-stat { background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; transition: all 0.2s ease; }
@@ -363,18 +384,17 @@
   .compress-stat.compressed .value { color: var(--success); }
   .compress-stat.saved .value { background: linear-gradient(135deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
-  /* ═══ СЛАЙДЕР СРАВНЕНИЯ ═══ */
+  /* ═══ СЛАЙДЕР СРАВНЕНИЯ (исходная снизу, сжатая сверху с маской) ═══ */
   .compare {
     position: relative;
     width: 100%;
-    max-width: 100%;
-    aspect-ratio: auto;
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid var(--border);
     background: var(--panel-2);
     user-select: none;
     touch-action: none;
+    line-height: 0;
   }
   .compare img {
     display: block;
@@ -382,25 +402,25 @@
     height: auto;
     pointer-events: none;
   }
-  .compare-after {
+  .compare-base {
     display: block;
     width: 100%;
   }
-  .compare-before-wrap {
+  .compare-overlay-wrap {
     position: absolute;
     top: 0;
     left: 0;
     width: 50%;
     height: 100%;
     overflow: hidden;
+    pointer-events: none;
   }
-  .compare-before {
+  .compare-overlay {
     display: block;
-    width: 200%;
+    width: calc(100% / 0.5);
     max-width: none;
     height: 100%;
     object-fit: cover;
-    object-position: left top;
   }
   .compare-slider {
     position: absolute;
@@ -458,11 +478,12 @@
       </div>
       ImageForge
     </div>
-    <div class="badge">v2.0</div>
+    <div class="badge">v2.1</div>
   </header>
 
-  <!-- ═══ НАВИГАЦИЯ ═══ -->
-  <nav class="nav">
+  <!-- ═══ НАВИГАЦИЯ С ПЛАВНЫМ ИНДИКАТОРОМ ═══ -->
+  <nav class="nav" id="nav">
+    <div class="nav-indicator" id="navIndicator"></div>
     <button class="nav-btn active" data-page="home">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       Главная
@@ -471,19 +492,17 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
       Конвертация
     </button>
-    <button class="nav-btn" data-page="metadata">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-      Метаданные
-    </button>
     <button class="nav-btn" data-page="compress">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
       Сжатие
     </button>
+    <button class="nav-btn" data-page="metadata">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      Метаданные
+    </button>
   </nav>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- ═══ СТРАНИЦА: ГЛАВНАЯ ═══ -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ═══ ГЛАВНАЯ ═══ -->
   <section class="page active" data-page="home">
     <div class="hero-home">
       <h1>ImageForge</h1>
@@ -511,6 +530,20 @@
         </div>
         <h3>12 форматов</h3>
         <p>Поддержка JPG, PNG, WebP, TIFF, AVIF, JPEG XL, ICO, HEIC, GIF, BMP, SVG и PSD. Конвертация между любыми форматами в несколько кликов.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </div>
+        <h3>Метаданные</h3>
+        <p>Просматривайте и редактируйте EXIF, IPTC, XMP данные: модель камеры, параметры съёмки, GPS-координаты, автор и копирайт. Удаляйте конфиденциальную информацию в один клик.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        </div>
+        <h3>Умное сжатие</h3>
+        <p>Оптимальное соотношение размера и качества. Наглядное сравнение оригинала и сжатой версии с помощью интерактивного ползунка — двигайте его, чтобы увидеть разницу.</p>
       </div>
     </div>
 
@@ -545,9 +578,7 @@
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- ═══ СТРАНИЦА: КОНВЕРТАЦИЯ ═══ -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ═══ КОНВЕРТАЦИЯ ═══ -->
   <section class="page" data-page="convert">
     <div class="grid">
       <div class="card">
@@ -618,53 +649,7 @@
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- ═══ СТРАНИЦА: МЕТАДАННЫЕ ═══ -->
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <section class="page" data-page="metadata">
-    <div class="card" style="margin-bottom:20px;">
-      <h2>Загрузите изображение</h2>
-      <div class="dropzone" id="metaDropzone">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <div class="title">Перетащите файл сюда</div>
-        <div class="sub">или нажмите для выбора · JPG, PNG, WebP, TIFF</div>
-        <input type="file" id="metaFileInput" accept="image/jpeg,image/png,image/webp,image/tiff,.jpg,.jpeg,.png,.webp,.tif,.tiff" hidden />
-      </div>
-    </div>
-
-    <div id="metaContent" style="display:none;">
-      <div class="card" style="margin-bottom:20px;">
-        <h2>Информация о файле</h2>
-        <div class="meta-preview">
-          <div class="meta-preview-img" id="metaPreviewImg"></div>
-          <div class="meta-info" id="metaInfo"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Метаданные</h2>
-        <div class="meta-actions">
-          <button class="btn danger" id="metaStripBtn" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
-            Удалить все метаданные
-          </button>
-          <button class="btn primary" id="metaSaveBtn" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-            Сохранить с изменениями
-          </button>
-          <button class="btn" id="metaDownloadBtn" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Скачать файл
-          </button>
-        </div>
-        <div id="metaTableWrap" style="margin-top:16px;"></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════ -->
-  <!-- ═══ СТРАНИЦА: СЖАТИЕ ═══ -->
-  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ═══ СЖАТИЕ ═══ -->
   <section class="page" data-page="compress">
     <div class="card" style="margin-bottom:20px;">
       <h2>Загрузите изображение</h2>
@@ -673,6 +658,19 @@
         <div class="title">Перетащите файл сюда</div>
         <div class="sub">или нажмите для выбора · JPG, PNG, WebP</div>
         <input type="file" id="compressFileInput" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
+      </div>
+      <div class="meta-actions" id="compressFileActions" style="display:none; margin-top:14px;">
+        <div style="flex:1; display:flex; align-items:center; gap:10px; padding:10px; background:var(--panel-2); border:1px solid var(--border); border-radius:10px;">
+          <div class="thumb" id="compressThumb"></div>
+          <div class="file-info">
+            <div class="file-name" id="compressFileName">—</div>
+            <div class="file-meta" id="compressFileSize">—</div>
+          </div>
+        </div>
+        <button class="btn danger" id="compressRemoveBtn" style="flex:0 0 auto; min-width:auto;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+          Удалить
+        </button>
       </div>
     </div>
 
@@ -707,7 +705,7 @@
         </div>
       </div>
 
-      <div class="compress-result" id="compressResult">
+      <div id="compressResult" style="display:none;">
         <div class="compress-stats">
           <div class="compress-stat original">
             <div class="label">Оригинал</div>
@@ -726,22 +724,77 @@
         <div class="card">
           <h2>Сравнение: до и после</h2>
           <div class="compare" id="compareContainer">
-            <img class="compare-after" id="compareAfter" alt="" />
-            <div class="compare-before-wrap" id="compareBeforeWrap">
-              <img class="compare-before" id="compareBefore" alt="" />
+            <img class="compare-base" id="compareBase" alt="Исходное" />
+            <div class="compare-overlay-wrap" id="compareOverlayWrap">
+              <img class="compare-overlay" id="compareOverlay" alt="Сжатое" />
             </div>
             <div class="compare-slider" id="compareSlider">
               <div class="compare-handle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/><polyline points="9 18 15 12 9 6" transform="translate(6,0)"/></svg>
               </div>
             </div>
-            <div class="compare-label before">До</div>
-            <div class="compare-label after">После</div>
+            <div class="compare-label before">Сжатое</div>
+            <div class="compare-label after">Оригинал</div>
           </div>
           <div style="margin-top:12px; color: var(--muted); font-size: 12px; text-align: center;">
-            Перетаскивайте ползунок, чтобы сравнить оригинал и сжатую версию
+            Перетаскивайте ползунок, чтобы сравнить сжатую и исходную версии
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ МЕТАДАННЫЕ ═══ -->
+  <section class="page" data-page="metadata">
+    <div class="card" style="margin-bottom:20px;">
+      <h2>Загрузите изображение</h2>
+      <div class="dropzone" id="metaDropzone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <div class="title">Перетащите файл сюда</div>
+        <div class="sub">или нажмите для выбора · JPG, PNG, WebP, TIFF</div>
+        <input type="file" id="metaFileInput" accept="image/jpeg,image/png,image/webp,image/tiff,.jpg,.jpeg,.png,.webp,.tif,.tiff" hidden />
+      </div>
+      <div class="meta-actions" id="metaFileActions" style="display:none; margin-top:14px;">
+        <div style="flex:1; display:flex; align-items:center; gap:10px; padding:10px; background:var(--panel-2); border:1px solid var(--border); border-radius:10px;">
+          <div class="thumb" id="metaThumb"></div>
+          <div class="file-info">
+            <div class="file-name" id="metaFileName">—</div>
+            <div class="file-meta" id="metaFileSize">—</div>
+          </div>
+        </div>
+        <button class="btn danger" id="metaRemoveBtn" style="flex:0 0 auto; min-width:auto;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+          Удалить
+        </button>
+      </div>
+    </div>
+
+    <div id="metaContent" style="display:none;">
+      <div class="card" style="margin-bottom:20px;">
+        <h2>Информация о файле</h2>
+        <div class="meta-preview">
+          <div class="meta-preview-img" id="metaPreviewImg"></div>
+          <div class="meta-info" id="metaInfo"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Метаданные</h2>
+        <div class="meta-actions">
+          <button class="btn danger" id="metaStripBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+            Удалить все метаданные
+          </button>
+          <button class="btn primary" id="metaSaveBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Сохранить с изменениями
+          </button>
+          <button class="btn" id="metaDownloadBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Скачать файл
+          </button>
+        </div>
+        <div id="metaTableWrap" style="margin-top:16px;"></div>
       </div>
     </div>
   </section>
@@ -757,10 +810,6 @@
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
-
-  // ═══════════════════════════════════════════════════════
-  //  ОБЩИЕ УТИЛИТЫ
-  // ═══════════════════════════════════════════════════════
   const fmtSize = (b) => b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(2)+' MB';
   const getExt = (n) => { const i = n.lastIndexOf('.'); return i >= 0 ? n.substring(i+1).toLowerCase() : ''; };
 
@@ -791,20 +840,56 @@
   });
 
   // ═══════════════════════════════════════════════════════
-  //  НАВИГАЦИЯ
+  //  НАВИГАЦИЯ С ПЛАВНЫМ ИНДИКАТОРОМ
   // ═══════════════════════════════════════════════════════
+  const nav = $('nav');
   const navBtns = document.querySelectorAll('.nav-btn');
   const pages = document.querySelectorAll('.page');
+  const navIndicator = $('navIndicator');
+
+  const updateIndicator = (btn, animate = true) => {
+    const navRect = nav.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    const left = btnRect.left - navRect.left;
+    const width = btnRect.width;
+    navIndicator.style.left = left + 'px';
+    navIndicator.style.width = width + 'px';
+    if (animate) {
+      navIndicator.classList.remove('bounce');
+      void navIndicator.offsetWidth; // restart animation
+      navIndicator.classList.add('bounce');
+    }
+  };
+
+  // Инициализация позиции индикатора
+  const initIndicator = () => {
+    const activeBtn = document.querySelector('.nav-btn.active');
+    if (activeBtn) {
+      // Без анимации при первом запуске
+      navIndicator.style.transition = 'none';
+      updateIndicator(activeBtn, false);
+      requestAnimationFrame(() => {
+        navIndicator.style.transition = '';
+      });
+    }
+  };
+  window.addEventListener('load', initIndicator);
+  window.addEventListener('resize', () => {
+    const activeBtn = document.querySelector('.nav-btn.active');
+    if (activeBtn) updateIndicator(activeBtn, false);
+  });
+
   navBtns.forEach(btn => btn.addEventListener('click', () => {
     navBtns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     pages.forEach(p => p.classList.remove('active'));
     document.querySelector(`.page[data-page="${btn.dataset.page}"]`).classList.add('active');
+    updateIndicator(btn, true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }));
 
   // ═══════════════════════════════════════════════════════
-  //  WASM МОДУЛИ (ленивая загрузка)
+  //  WASM МОДУЛИ
   // ═══════════════════════════════════════════════════════
   let avifNativeSupported = false;
   let avifWasmModule = null, avifWasmLoading = false, avifWasmFailed = false;
@@ -821,7 +906,7 @@
 
   const loadAvifWasm = async () => {
     if (avifWasmModule) return avifWasmModule;
-    if (avifWasmFailed) throw new Error('WASM-кодер AVIF недоступен');
+    if (avifWasmFailed) throw new Error('WASM AVIF недоступен');
     if (avifWasmLoading) { while (avifWasmLoading) await new Promise(r => setTimeout(r, 100)); return avifWasmModule; }
     avifWasmLoading = true;
     try {
@@ -833,7 +918,7 @@
 
   const loadJxlWasm = async () => {
     if (jxlWasmModule) return jxlWasmModule;
-    if (jxlWasmFailed) throw new Error('WASM-кодер JPEG XL недоступен');
+    if (jxlWasmFailed) throw new Error('WASM JXL недоступен');
     if (jxlWasmLoading) { while (jxlWasmLoading) await new Promise(r => setTimeout(r, 100)); return jxlWasmModule; }
     jxlWasmLoading = true;
     try {
@@ -844,7 +929,7 @@
   };
 
   // ═══════════════════════════════════════════════════════
-  //  СТРАНИЦА: КОНВЕРТАЦИЯ
+  //  КОНВЕРТАЦИЯ
   // ═══════════════════════════════════════════════════════
   const dropzone = $('dropzone'), fileInput = $('fileInput'), fileList = $('fileList');
   const emptyState = $('emptyState'), qualityInput = $('quality'), qualityVal = $('qualityVal');
@@ -954,48 +1039,76 @@
     } catch (err) { showToast('Ошибка: ' + err.message, 'error'); }
   };
 
+  // ═══ Создание DOM-элемента файла ═══
+  const createFileItem = (f) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.dataset.id = f.id;
+
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb';
+    if (f.thumbUrl) {
+      const img = document.createElement('img');
+      img.src = f.thumbUrl;
+      img.onerror = () => img.remove();
+      thumb.appendChild(img);
+    }
+
+    const info = document.createElement('div');
+    info.className = 'file-info';
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'file-name';
+    nameDiv.textContent = f.outputName || f.name;
+    const meta = document.createElement('div');
+    meta.className = 'file-meta';
+    meta.textContent = f.status === 'done' && f.outputSize ? `${fmtSize(f.size)} → ${fmtSize(f.outputSize)}` : fmtSize(f.size);
+    info.append(nameDiv, meta);
+
+    const status = document.createElement('div');
+    status.className = 'file-status status-' + f.status;
+    status.textContent = {pending:'Ожидает', processing:'Обработка', done:'Готово', error:'Ошибка'}[f.status] || f.status;
+
+    item.append(thumb, info, status);
+
+    if (f.status === 'done' && f.output) {
+      const dl = document.createElement('button');
+      dl.className = 'dl-btn';
+      dl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Скачать';
+      dl.onclick = (e) => { e.stopPropagation(); downloadFile(f); };
+      item.appendChild(dl);
+    }
+
+    const rm = document.createElement('button');
+    rm.className = 'remove-btn';
+    rm.title = 'Удалить';
+    rm.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    rm.onclick = (e) => { e.stopPropagation(); removeFile(f.id); };
+    item.appendChild(rm);
+
+    return item;
+  };
+
+  // ═══ Обновление одного элемента (без перерисовки всего списка) ═══
+  const updateFileItem = (f) => {
+    const existing = fileList.querySelector(`[data-id="${f.id}"]`);
+    if (existing) {
+      const newItem = createFileItem(f);
+      existing.replaceWith(newItem);
+    }
+  };
+
   const renderFiles = () => {
     fileList.innerHTML = '';
-    if (!files.length) { fileList.appendChild(emptyState); updateStats(); updateButtons(); return; }
-    files.forEach(f => {
-      const item = document.createElement('div');
-      item.className = 'file-item';
-      item.dataset.id = f.id;
-      const thumb = document.createElement('div');
-      thumb.className = 'thumb';
-      if (f.thumbUrl) { const img = document.createElement('img'); img.src = f.thumbUrl; img.onerror = () => img.remove(); thumb.appendChild(img); }
-      const info = document.createElement('div');
-      info.className = 'file-info';
-      const nameDiv = document.createElement('div');
-      nameDiv.className = 'file-name';
-      nameDiv.textContent = f.outputName || f.name;
-      const meta = document.createElement('div');
-      meta.className = 'file-meta';
-      meta.textContent = f.status === 'done' && f.outputSize ? `${fmtSize(f.size)} → ${fmtSize(f.outputSize)}` : fmtSize(f.size);
-      info.append(nameDiv, meta);
-      const status = document.createElement('div');
-      status.className = 'file-status status-' + f.status;
-      status.textContent = {pending:'Ожидает', processing:'Обработка', done:'Готово', error:'Ошибка'}[f.status] || f.status;
-      item.append(thumb, info, status);
-      if (f.status === 'done' && f.output) {
-        const dl = document.createElement('button');
-        dl.className = 'dl-btn';
-        dl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Скачать';
-        dl.onclick = (e) => { e.stopPropagation(); downloadFile(f); };
-        item.appendChild(dl);
-      }
-      const rm = document.createElement('button');
-      rm.className = 'remove-btn';
-      rm.title = 'Удалить';
-      rm.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-      rm.onclick = (e) => { e.stopPropagation(); removeFile(f.id); };
-      item.appendChild(rm);
-      fileList.appendChild(item);
-    });
+    if (!files.length) {
+      fileList.appendChild(emptyState);
+    } else {
+      files.forEach(f => fileList.appendChild(createFileItem(f)));
+    }
     updateStats();
     updateButtons();
   };
 
+  // ═══ ТОЧЕЧНОЕ удаление файла (без перерисовки всего списка) ═══
   const removeFile = (id) => {
     const item = fileList.querySelector(`[data-id="${id}"]`);
     if (item && !item.classList.contains('removing')) {
@@ -1004,7 +1117,14 @@
         const f = files.find(x => x.id === id);
         if (f?.thumbUrl) URL.revokeObjectURL(f.thumbUrl);
         files = files.filter(x => x.id !== id);
-        renderFiles();
+        item.remove(); // ТОЧЕЧНОЕ удаление из DOM
+        // Если список пуст — показать empty state
+        if (!files.length) {
+          fileList.innerHTML = '';
+          fileList.appendChild(emptyState);
+        }
+        updateStats();
+        updateButtons();
       }, 300);
     }
   };
@@ -1013,6 +1133,9 @@
     const validTypes = ['image/jpeg','image/png','image/webp','image/heic','image/heif','image/tiff','image/avif','image/svg+xml','image/bmp','image/gif','image/x-icon','image/vnd.microsoft.icon','image/vnd.adobe.photoshop'];
     const validExts = ['jpg','jpeg','png','webp','heic','heif','tif','tiff','avif','svg','bmp','gif','psd','ico'];
     let added = 0;
+    // Убираем empty state если он есть
+    if (emptyState.parentNode === fileList) fileList.removeChild(emptyState);
+
     for (const file of fileArr) {
       const ext = getExt(file.name);
       if (!validTypes.includes(file.type) && !validExts.includes(ext)) { showToast(`Пропущен: ${file.name}`, 'error'); continue; }
@@ -1045,9 +1168,12 @@
           } catch (e) { entry.thumbUrl = URL.createObjectURL(file); }
         } else { entry.thumbUrl = URL.createObjectURL(file); }
       } catch (e) { console.warn('Thumb failed:', e); showToast(`${file.name}: ${e.message}`, 'error'); continue; }
-      files.push(entry); added++;
+      files.push(entry);
+      // Добавляем элемент в DOM точечно
+      fileList.appendChild(createFileItem(entry));
+      added++;
     }
-    if (added) { renderFiles(); showToast(`Добавлено: ${added}`, 'success'); }
+    if (added) { updateStats(); updateButtons(); showToast(`Добавлено: ${added}`, 'success'); }
   };
 
   const convertFile = async (entry) => {
@@ -1055,7 +1181,9 @@
     const baseName = entry.name.substring(0, entry.name.lastIndexOf('.')) || entry.name;
     entry.outputName = baseName + '.' + (selectedFormat === 'jpg' ? 'jpg' : selectedFormat);
     try {
-      entry.status = 'processing'; renderFiles();
+      entry.status = 'processing';
+      updateFileItem(entry); // Обновляем только этот элемент
+
       let sourceBlob = entry._decodedBlob || entry.file;
       if ((entry._ext === 'heic' || entry._ext === 'heif') && !entry._decodedBlob) {
         const blob = await heic2any({ blob: entry.file, toType: 'image/png' });
@@ -1131,8 +1259,9 @@
       entry.output = outputBlob;
       entry.outputSize = outputBlob.size;
       entry.status = 'done';
+      updateFileItem(entry); // Обновляем только этот элемент
       return true;
-    } catch (e) { console.error('Conversion error:', e); entry.status = 'error'; entry.errorMsg = e.message; return false; }
+    } catch (e) { console.error('Conversion error:', e); entry.status = 'error'; entry.errorMsg = e.message; updateFileItem(entry); return false; }
   };
 
   const convertAll = async () => {
@@ -1143,7 +1272,6 @@
     let done = 0, failed = 0;
     for (const entry of files) {
       if (await convertFile(entry)) done++; else failed++;
-      renderFiles();
       progressFill.style.width = ((done + failed) / files.length * 100) + '%';
     }
     progressBar.classList.remove('active');
@@ -1216,23 +1344,72 @@
   clearBtn.addEventListener('click', clearAll);
 
   // ═══════════════════════════════════════════════════════
-  //  СТРАНИЦА: МЕТАДАННЫЕ
+  //  МЕТАДАННЫЕ
   // ═══════════════════════════════════════════════════════
   const metaDropzone = $('metaDropzone'), metaFileInput = $('metaFileInput');
   const metaContent = $('metaContent'), metaPreviewImg = $('metaPreviewImg');
   const metaInfo = $('metaInfo'), metaTableWrap = $('metaTableWrap');
   const metaStripBtn = $('metaStripBtn'), metaSaveBtn = $('metaSaveBtn'), metaDownloadBtn = $('metaDownloadBtn');
+  const metaFileActions = $('metaFileActions'), metaRemoveBtn = $('metaRemoveBtn');
+  const metaThumb = $('metaThumb'), metaFileName = $('metaFileName'), metaFileSize = $('metaFileSize');
 
-  let metaState = { file: null, metadata: null, edits: {}, previewUrl: null, strippedBlob: null };
+  let metaState = { file: null, metadata: null, edits: {}, previewUrl: null, thumbUrl: null, resultBlob: null };
 
-  const EXIF_EDITABLE = [
-    { tag: 'ImageDescription', name: 'Описание', type: 'text' },
-    { tag: 'Make', name: 'Производитель', type: 'text' },
-    { tag: 'Model', name: 'Модель камеры', type: 'text' },
-    { tag: 'Software', name: 'Программа', type: 'text' },
-    { tag: 'Artist', name: 'Автор', type: 'text' },
-    { tag: 'Copyright', name: 'Копирайт', type: 'text' },
-    { tag: 'UserComment', name: 'Комментарий', type: 'text' }
+  // Имена тегов для красивого отображения
+  const TAG_NAMES = {
+    // Основное
+    ImageDescription: 'Описание', Make: 'Производитель', Model: 'Модель камеры',
+    Software: 'Программа', DateTime: 'Дата/время', DateTimeOriginal: 'Дата съёмки',
+    DateTimeDigitized: 'Дата оцифровки', Artist: 'Автор', Copyright: 'Копирайт',
+    UserComment: 'Комментарий', Orientation: 'Ориентация', XResolution: 'Разрешение X',
+    YResolution: 'Разрешение Y', ResolutionUnit: 'Единица разрешения',
+    // Съёмка
+    ExposureTime: 'Выдержка', FNumber: 'Диафрагма', ISO: 'ISO',
+    ShutterSpeedValue: 'Скорость затвора', ApertureValue: 'Апертура',
+    BrightnessValue: 'Яркость', ExposureBiasValue: 'Компенсация экспозиции',
+    MaxApertureValue: 'Макс. апертура', MeteringMode: 'Режим замера',
+    LightSource: 'Источник света', Flash: 'Вспышка', FocalLength: 'Фокусное расстояние',
+    LensModel: 'Модель объектива', LensMake: 'Производитель объектива',
+    LensSpecification: 'Спецификация объектива', SerialNumber: 'Серийный номер',
+    BodySerialNumber: 'Серийный номер камеры',
+    // Изображение
+    PixelXDimension: 'Ширина (px)', PixelYDimension: 'Высота (px)',
+    ColorSpace: 'Цветовое пространство', ExifVersion: 'Версия EXIF',
+    FlashpixVersion: 'Версия Flashpix', ComponentsConfiguration: 'Конфигурация компонентов',
+    CompressedBitsPerPixel: 'Бит на пиксель', SubjectArea: 'Область объекта',
+    SceneCaptureType: 'Тип сцены', Contrast: 'Контраст', Saturation: 'Насыщенность',
+    Sharpness: 'Резкость', WhiteBalance: 'Баланс белого', DigitalZoomRatio: 'Цифровой зум',
+    SceneType: 'Тип сцены', CustomRendered: 'Обработка', GainControl: 'Усиление',
+    // GPS
+    latitude: 'Широта', longitude: 'Долгота',
+    GPSLatitude: 'Широта GPS', GPSLongitude: 'Долгота GPS',
+    GPSAltitude: 'Высота', GPSTimeStamp: 'Время GPS', GPSDateStamp: 'Дата GPS',
+    GPSLatitudeRef: 'Север/Юг', GPSLongitudeRef: 'Восток/Запад',
+    GPSAltitudeRef: 'Высота (ref)', GPSSpeed: 'Скорость', GPSImgDirection: 'Направление',
+    GPSMapDatum: 'Датум карты', GPSSatellites: 'Спутники',
+    GPSStatus: 'Статус GPS', GPSMeasureMode: 'Режим измерения',
+    GPSDOP: 'Точность', GPSSpeedRef: 'Единица скорости',
+    GPSImgDirectionRef: 'Единица направления', GPSDestBearing: 'Пеленг',
+    GPSDestBearingRef: 'Единица пеленга', GPSDestDistance: 'Расстояние до цели',
+    // Прочее
+    ThumbnailOffset: 'Смещение превью', ThumbnailLength: 'Размер превью',
+    ExifImageWidth: 'Ширина EXIF', ExifImageHeight: 'Высота EXIF',
+    SubSecTime: 'Секунды (дробные)', SubSecTimeOriginal: 'Секунды съёмки',
+    SubSecTimeDigitized: 'Секунды оцифровки',
+    // XMP / IPTC
+    Creator: 'Создатель (XMP)', Description: 'Описание (XMP)',
+    Title: 'Заголовок', Keywords: 'Ключевые слова', Rating: 'Рейтинг',
+    Label: 'Метка', Headline: 'Заголовок (IPTC)', Caption: 'Подпись (IPTC)',
+    Credit: 'Благодарность', Source: 'Источник', City: 'Город',
+    State: 'Регион', Country: 'Страна', Location: 'Место'
+  };
+
+  // Секции для группировки
+  const SECTIONS = [
+    { name: 'Основное', tags: ['ImageDescription','Make','Model','Software','DateTime','DateTimeOriginal','DateTimeDigitized','Artist','Copyright','UserComment','Orientation','XResolution','YResolution','ResolutionUnit','SerialNumber','BodySerialNumber','Creator','Description','Title','Keywords','Rating','Label','Headline','Caption','Credit','Source','City','State','Country','Location'] },
+    { name: 'Съёмка', tags: ['ExposureTime','FNumber','ISO','ShutterSpeedValue','ApertureValue','BrightnessValue','ExposureBiasValue','MaxApertureValue','MeteringMode','LightSource','Flash','FocalLength','LensModel','LensMake','LensSpecification','SceneCaptureType','Contrast','Saturation','Sharpness','WhiteBalance','DigitalZoomRatio','SceneType','CustomRendered','GainControl','SubSecTime','SubSecTimeOriginal','SubSecTimeDigitized'] },
+    { name: 'Изображение', tags: ['PixelXDimension','PixelYDimension','ExifImageWidth','ExifImageHeight','ColorSpace','ExifVersion','FlashpixVersion','ComponentsConfiguration','CompressedBitsPerPixel','SubjectArea','ThumbnailOffset','ThumbnailLength'] },
+    { name: 'GPS', tags: ['latitude','longitude','GPSLatitude','GPSLongitude','GPSAltitude','GPSTimeStamp','GPSDateStamp','GPSLatitudeRef','GPSLongitudeRef','GPSAltitudeRef','GPSSpeed','GPSImgDirection','GPSMapDatum','GPSSatellites','GPSStatus','GPSMeasureMode','GPSDOP','GPSSpeedRef','GPSImgDirectionRef','GPSDestBearing','GPSDestBearingRef','GPSDestDistance'] }
   ];
 
   metaDropzone.addEventListener('click', () => metaFileInput.click());
@@ -1244,19 +1421,45 @@
   ['dragleave','drop'].forEach(ev => metaDropzone.addEventListener(ev, e => { e.preventDefault(); metaDropzone.classList.remove('drag'); }));
   metaDropzone.addEventListener('drop', e => { if (e.dataTransfer?.files?.length) loadMetaFile(e.dataTransfer.files[0]); });
 
+  metaRemoveBtn.addEventListener('click', () => {
+    if (metaState.previewUrl) URL.revokeObjectURL(metaState.previewUrl);
+    if (metaState.thumbUrl) URL.revokeObjectURL(metaState.thumbUrl);
+    metaState = { file: null, metadata: null, edits: {}, previewUrl: null, thumbUrl: null, resultBlob: null };
+    metaContent.style.display = 'none';
+    metaFileActions.style.display = 'none';
+    metaThumb.innerHTML = '';
+    metaFileName.textContent = '—';
+    metaFileSize.textContent = '—';
+    metaPreviewImg.innerHTML = '';
+    metaInfo.innerHTML = '';
+    metaTableWrap.innerHTML = '';
+    showToast('Файл удалён', 'success');
+  });
+
   const loadMetaFile = async (file) => {
     if (!file.type.match(/^image\/(jpeg|png|webp|tiff)$/) && !file.name.match(/\.(jpe?g|png|webp|tiff?)$/i)) {
       showToast('Поддерживаются только JPG, PNG, WebP, TIFF', 'error');
       return;
     }
     if (metaState.previewUrl) URL.revokeObjectURL(metaState.previewUrl);
-    metaState = { file, metadata: null, edits: {}, previewUrl: null, strippedBlob: null };
+    if (metaState.thumbUrl) URL.revokeObjectURL(metaState.thumbUrl);
+    metaState = { file, metadata: null, edits: {}, previewUrl: null, thumbUrl: null, resultBlob: null };
 
+    // Превью и миниатюра
     metaPreviewImg.innerHTML = '';
     const img = document.createElement('img');
     metaState.previewUrl = URL.createObjectURL(file);
     img.src = metaState.previewUrl;
     metaPreviewImg.appendChild(img);
+
+    metaThumb.innerHTML = '';
+    const thumbImg = document.createElement('img');
+    metaState.thumbUrl = URL.createObjectURL(file);
+    thumbImg.src = metaState.thumbUrl;
+    metaThumb.appendChild(thumbImg);
+    metaFileName.textContent = file.name;
+    metaFileSize.textContent = fmtSize(file.size);
+    metaFileActions.style.display = 'flex';
 
     metaInfo.innerHTML = `
       <div class="meta-info-row"><span class="k">Имя файла</span><span class="v">${file.name}</span></div>
@@ -1272,7 +1475,10 @@
     metaDownloadBtn.disabled = true;
 
     try {
-      const metadata = await exifr.parse(file, { tiff: true, exif: true, gps: true, iptc: true, icc: true, xmp: true, jfif: true, ihdr: true });
+      const metadata = await exifr.parse(file, {
+        tiff: true, exif: true, gps: true, iptc: true, icc: true, xmp: true,
+        jfif: true, ihdr: true, interop: true, mergeOutput: true
+      });
       metaState.metadata = metadata || {};
       renderMetaTable();
       const isJpeg = file.type === 'image/jpeg' || file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg');
@@ -1284,10 +1490,19 @@
       }
     } catch (e) {
       console.error('Meta parse error:', e);
-      metaTableWrap.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted);">Метаданные не найдены или не поддерживаются для этого формата.</div>`;
+      metaTableWrap.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);">Метаданные не найдены или не поддерживаются для этого формата.</div>';
       metaStripBtn.disabled = false;
       metaDownloadBtn.disabled = false;
     }
+  };
+
+  const formatValue = (val) => {
+    if (val === null || val === undefined) return '—';
+    if (val instanceof Date) return val.toLocaleString('ru-RU');
+    if (typeof val === 'object') {
+      try { return JSON.stringify(val); } catch(e) { return String(val); }
+    }
+    return String(val);
   };
 
   const renderMetaTable = () => {
@@ -1297,40 +1512,28 @@
       return;
     }
 
-    const sections = {
-      'Основное': ['ImageDescription', 'Make', 'Model', 'Software', 'DateTime', 'DateTimeOriginal', 'DateTimeDigitized', 'Artist', 'Copyright', 'UserComment', 'Orientation', 'XResolution', 'YResolution', 'ResolutionUnit'],
-      'Съёмка': ['ExposureTime', 'FNumber', 'ISO', 'ShutterSpeedValue', 'ApertureValue', 'BrightnessValue', 'ExposureBiasValue', 'MaxApertureValue', 'MeteringMode', 'LightSource', 'Flash', 'FocalLength', 'LensModel', 'LensMake'],
-      'Изображение': ['PixelXDimension', 'PixelYDimension', 'ColorSpace', 'ComponentsConfiguration', 'CompressedBitsPerPixel', 'SubjectArea'],
-      'GPS': ['latitude', 'longitude', 'GPSLatitude', 'GPSLongitude', 'GPSAltitude', 'GPSTimeStamp', 'GPSDateStamp'],
-      'Thumbnail': ['ThumbnailOffset', 'ThumbnailLength']
-    };
-
+    const isJpeg = metaState.file.type === 'image/jpeg' || metaState.file.name.toLowerCase().endsWith('.jpg') || metaState.file.name.toLowerCase().endsWith('.jpeg');
     const shown = new Set();
     let html = '<div class="meta-table-wrap"><table class="meta-table"><thead><tr><th style="width:35%;">Параметр</th><th>Значение</th></tr></thead><tbody>';
 
-    const isJpeg = metaState.file.type === 'image/jpeg' || metaState.file.name.toLowerCase().endsWith('.jpg') || metaState.file.name.toLowerCase().endsWith('.jpeg');
-
-    for (const [section, tags] of Object.entries(sections)) {
+    // Группируем по секциям
+    for (const section of SECTIONS) {
       const rows = [];
-      for (const tag of tags) {
-        if (metadata[tag] !== undefined && metadata[tag] !== null) {
-          let val = metadata[tag];
-          if (val instanceof Date) val = val.toLocaleString('ru-RU');
-          else if (typeof val === 'object') val = JSON.stringify(val);
-          else val = String(val);
-          rows.push({ tag, val });
+      for (const tag of section.tags) {
+        if (metadata[tag] !== undefined && metadata[tag] !== null && metadata[tag] !== '') {
+          rows.push({ tag, val: formatValue(metadata[tag]) });
           shown.add(tag);
         }
       }
       if (rows.length) {
-        html += `<tr><td colspan="2" class="meta-section-header">${section}</td></tr>`;
+        html += `<tr><td colspan="2" class="meta-section-header">${section.name}</td></tr>`;
         for (const { tag, val } of rows) {
-          const editableInfo = isJpeg ? EXIF_EDITABLE.find(e => e.tag === tag) : null;
-          const editValue = metaState.edits[tag] !== undefined ? metaState.edits[tag] : val;
-          if (editableInfo) {
-            html += `<tr><td class="tag" title="${tag}">${editableInfo.name}</td><td class="val-cell editable" data-tag="${tag}"><input class="edit-input" type="text" value="${editValue.replace(/"/g, '&quot;')}" data-tag="${tag}"></td></tr>`;
+          const displayName = TAG_NAMES[tag] || tag;
+          if (isJpeg && typeof metadata[tag] === 'string') {
+            const editValue = metaState.edits[tag] !== undefined ? metaState.edits[tag] : val;
+            html += `<tr><td class="tag" title="${tag}">${displayName}</td><td class="val-cell"><input class="edit-input" type="text" value="${editValue.replace(/"/g, '&quot;')}" data-tag="${tag}"></td></tr>`;
           } else {
-            html += `<tr><td class="tag" title="${tag}">${tag}</td><td class="val-cell">${val}</td></tr>`;
+            html += `<tr><td class="tag" title="${tag}">${displayName}</td><td class="val-cell">${val}</td></tr>`;
           }
         }
       }
@@ -1339,18 +1542,20 @@
     // Остальные теги
     const other = [];
     for (const [tag, val] of Object.entries(metadata)) {
-      if (!shown.has(tag) && val !== undefined && val !== null) {
-        let v = val;
-        if (v instanceof Date) v = v.toLocaleString('ru-RU');
-        else if (typeof v === 'object') v = JSON.stringify(v);
-        else v = String(v);
-        other.push({ tag, val: v });
+      if (!shown.has(tag) && val !== undefined && val !== null && val !== '') {
+        other.push({ tag, val: formatValue(val) });
       }
     }
     if (other.length) {
       html += `<tr><td colspan="2" class="meta-section-header">Прочее</td></tr>`;
       for (const { tag, val } of other) {
-        html += `<tr><td class="tag" title="${tag}">${tag}</td><td class="val-cell">${val}</td></tr>`;
+        const displayName = TAG_NAMES[tag] || tag;
+        if (isJpeg && typeof metadata[tag] === 'string') {
+          const editValue = metaState.edits[tag] !== undefined ? metaState.edits[tag] : val;
+          html += `<tr><td class="tag" title="${tag}">${displayName}</td><td class="val-cell"><input class="edit-input" type="text" value="${editValue.replace(/"/g, '&quot;')}" data-tag="${tag}"></td></tr>`;
+        } else {
+          html += `<tr><td class="tag" title="${tag}">${displayName}</td><td class="val-cell">${val}</td></tr>`;
+        }
       }
     }
 
@@ -1377,7 +1582,7 @@
       URL.revokeObjectURL(img.src);
       const mime = metaState.file.type || 'image/jpeg';
       const strippedBlob = await new Promise((res, rej) => canvas.toBlob(b => b ? res(b) : rej(new Error('Strip failed')), mime, 0.92));
-      metaState.strippedBlob = strippedBlob;
+      metaState.resultBlob = strippedBlob;
       metaState.edits = {};
       showToast('Метаданные удалены', 'success');
       metaDownloadBtn.disabled = false;
@@ -1390,7 +1595,6 @@
     if (!isJpeg) { showToast('Редактирование доступно только для JPEG', 'error'); return; }
     try {
       showToast('Сохранение с изменениями...', 'warn');
-      // Читаем исходный EXIF
       const reader = new FileReader();
       const dataUrl = await new Promise((res, rej) => {
         reader.onload = () => res(reader.result);
@@ -1400,7 +1604,6 @@
       let exifObj;
       try { exifObj = piexif.load(dataUrl); } catch (e) { exifObj = { '0th': {}, 'Exif': {}, 'GPS': {}, '1st': {} }; }
 
-      // Применяем правки
       const tagMap = {
         'ImageDescription': { dir: '0th', id: piexif.ImageIFD.ImageDescription },
         'Make': { dir: '0th', id: piexif.ImageIFD.Make },
@@ -1423,10 +1626,9 @@
 
       const exifBytes = piexif.dump(exifObj);
       const newDataUrl = piexif.insert(exifBytes, dataUrl);
-      // Конвертируем dataURL в blob
       const res = await fetch(newDataUrl);
       const blob = await res.blob();
-      metaState.strippedBlob = blob;
+      metaState.resultBlob = blob;
       showToast('Изменения сохранены', 'success');
       metaDownloadBtn.disabled = false;
     } catch (e) {
@@ -1437,14 +1639,14 @@
 
   metaDownloadBtn.addEventListener('click', () => {
     if (!metaState.file) return;
-    const blob = metaState.strippedBlob || metaState.file;
+    const blob = metaState.resultBlob || metaState.file;
     const baseName = metaState.file.name.substring(0, metaState.file.name.lastIndexOf('.')) || metaState.file.name;
     const ext = getExt(metaState.file.name) || 'jpg';
     triggerDownload(blob, `${baseName}_clean.${ext}`);
   });
 
   // ═══════════════════════════════════════════════════════
-  //  СТРАНИЦА: СЖАТИЕ
+  //  СЖАТИЕ
   // ═══════════════════════════════════════════════════════
   const compressDropzone = $('compressDropzone'), compressFileInput = $('compressFileInput');
   const compressSettings = $('compressSettings');
@@ -1454,10 +1656,12 @@
   const compressResult = $('compressResult');
   const compressOrigSize = $('compressOrigSize'), compressNewSize = $('compressNewSize'), compressSaved = $('compressSaved');
   const compareContainer = $('compareContainer');
-  const compareBefore = $('compareBefore'), compareAfter = $('compareAfter');
-  const compareBeforeWrap = $('compareBeforeWrap'), compareSlider = $('compareSlider');
+  const compareBase = $('compareBase'), compareOverlay = $('compareOverlay');
+  const compareOverlayWrap = $('compareOverlayWrap'), compareSlider = $('compareSlider');
+  const compressFileActions = $('compressFileActions'), compressRemoveBtn = $('compressRemoveBtn');
+  const compressThumb = $('compressThumb'), compressFileName = $('compressFileName'), compressFileSize = $('compressFileSize');
 
-  let compressState = { file: null, originalUrl: null, compressedBlob: null, compressedUrl: null };
+  let compressState = { file: null, originalUrl: null, compressedBlob: null, compressedUrl: null, thumbUrl: null };
 
   compressDropzone.addEventListener('click', () => compressFileInput.click());
   compressFileInput.addEventListener('change', e => {
@@ -1468,6 +1672,21 @@
   ['dragleave','drop'].forEach(ev => compressDropzone.addEventListener(ev, e => { e.preventDefault(); compressDropzone.classList.remove('drag'); }));
   compressDropzone.addEventListener('drop', e => { if (e.dataTransfer?.files?.length) loadCompressFile(e.dataTransfer.files[0]); });
 
+  compressRemoveBtn.addEventListener('click', () => {
+    if (compressState.originalUrl) URL.revokeObjectURL(compressState.originalUrl);
+    if (compressState.compressedUrl) URL.revokeObjectURL(compressState.compressedUrl);
+    if (compressState.thumbUrl) URL.revokeObjectURL(compressState.thumbUrl);
+    compressState = { file: null, originalUrl: null, compressedBlob: null, compressedUrl: null, thumbUrl: null };
+    compressSettings.style.display = 'none';
+    compressResult.style.display = 'none';
+    compressFileActions.style.display = 'none';
+    compressThumb.innerHTML = '';
+    compressFileName.textContent = '—';
+    compressFileSize.textContent = '—';
+    compressDownloadBtn.disabled = true;
+    showToast('Файл удалён', 'success');
+  });
+
   const loadCompressFile = (file) => {
     if (!file.type.match(/^image\/(jpeg|png|webp)$/) && !file.name.match(/\.(jpe?g|png|webp)$/i)) {
       showToast('Поддерживаются только JPG, PNG, WebP', 'error');
@@ -1475,9 +1694,26 @@
     }
     if (compressState.originalUrl) URL.revokeObjectURL(compressState.originalUrl);
     if (compressState.compressedUrl) URL.revokeObjectURL(compressState.compressedUrl);
-    compressState = { file, originalUrl: URL.createObjectURL(file), compressedBlob: null, compressedUrl: null };
+    if (compressState.thumbUrl) URL.revokeObjectURL(compressState.thumbUrl);
+    compressState = {
+      file,
+      originalUrl: URL.createObjectURL(file),
+      compressedBlob: null,
+      compressedUrl: null,
+      thumbUrl: URL.createObjectURL(file)
+    };
+
+    // Миниатюра и имя файла
+    compressThumb.innerHTML = '';
+    const thumbImg = document.createElement('img');
+    thumbImg.src = compressState.thumbUrl;
+    compressThumb.appendChild(thumbImg);
+    compressFileName.textContent = file.name;
+    compressFileSize.textContent = fmtSize(file.size);
+    compressFileActions.style.display = 'flex';
+
     compressSettings.style.display = 'block';
-    compressResult.classList.remove('show');
+    compressResult.style.display = 'none';
     compressDownloadBtn.disabled = true;
   };
 
@@ -1502,23 +1738,25 @@
       compressState.compressedBlob = blob;
       compressState.compressedUrl = URL.createObjectURL(blob);
 
-      // Обновляем статистику
       compressOrigSize.textContent = fmtSize(compressState.file.size);
       compressNewSize.textContent = fmtSize(blob.size);
       const savedPct = Math.round((1 - blob.size / compressState.file.size) * 100);
       compressSaved.textContent = (savedPct > 0 ? '-' : '+') + Math.abs(savedPct) + '%';
 
-      // Обновляем слайдер сравнения
-      compareAfter.src = compressState.compressedUrl;
-      compareBefore.src = compressState.originalUrl;
-      // Устанавливаем размеры before-изображения по after
-      compareAfter.onload = () => {
-        const ratio = compareAfter.naturalWidth / compareAfter.naturalHeight;
-        compareBefore.style.width = (compareAfter.clientWidth * ratio > compareAfter.clientHeight * (compareAfter.naturalWidth / compareAfter.naturalHeight)) ? 'auto' : '100%';
-      };
-      setSliderPosition(50);
+      // Слайдер сравнения
+      // compareBase — исходная (всегда видна полностью)
+      // compareOverlay — сжатая (обрезается ползунком)
+      compareBase.src = compressState.originalUrl;
+      compareOverlay.src = compressState.compressedUrl;
 
-      compressResult.classList.add('show');
+      // Ждём загрузки base-картинки, чтобы установить правильные пропорции
+      await new Promise(res => {
+        if (compareBase.complete) res();
+        else compareBase.onload = res;
+      });
+
+      setSliderPosition(50);
+      compressResult.style.display = 'block';
       compressDownloadBtn.disabled = false;
       showToast('Сжатие завершено', 'success');
     } catch (e) {
@@ -1537,16 +1775,12 @@
   // ═══ Слайдер сравнения ═══
   const setSliderPosition = (percent) => {
     const p = Math.max(0, Math.min(100, percent));
-    compareBeforeWrap.style.width = p + '%';
+    compareOverlayWrap.style.width = p + '%';
     compareSlider.style.left = p + '%';
   };
 
   let isDragging = false;
-  const startDrag = (e) => {
-    isDragging = true;
-    e.preventDefault();
-    updateDrag(e);
-  };
+  const startDrag = (e) => { isDragging = true; e.preventDefault(); updateDrag(e); };
   const updateDrag = (e) => {
     if (!isDragging) return;
     const rect = compareContainer.getBoundingClientRect();
