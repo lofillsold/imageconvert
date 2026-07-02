@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ImageForge — Конвертер изображений</title>
-<!-- ═══ ФАВИКОНКА (та же, что и логотип) ═══ -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%237c5cff'/><stop offset='1' stop-color='%2322d3ee'/></linearGradient></defs><rect width='64' height='64' rx='14' fill='url(%23g)'/><g transform='translate(14,14) scale(1.5)' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='18' height='18' rx='3'/><circle cx='9' cy='9' r='2'/><path d='M21 15l-5-5L5 21'/></g></svg>" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css" />
@@ -20,44 +19,70 @@
   }
   html, body { height: 100%; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
   body { position: relative; min-height: 100vh; }
+  
+  /* ═══ АНИМИРОВАННЫЙ ГРАДИЕНТНЫЙ ФОН ═══ */
   body::before {
     content: '';
     position: fixed;
-    top: -25%; left: -25%;
-    width: 150%; height: 150%;
-    background:
-      radial-gradient(1200px 600px at 10% -10%, rgba(124,92,255,0.22), transparent 60%),
-      radial-gradient(900px 500px at 100% 0%, rgba(34,211,238,0.16), transparent 60%),
-      radial-gradient(800px 600px at 50% 100%, rgba(124,92,255,0.12), transparent 60%);
-    animation: bgDrift 22s ease-in-out infinite alternate;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: 
+      radial-gradient(ellipse at 20% 30%, rgba(124,92,255,0.35) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, rgba(34,211,238,0.30) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(124,92,255,0.20) 0%, transparent 60%),
+      radial-gradient(ellipse at 30% 80%, rgba(34,211,238,0.25) 0%, transparent 50%);
+    animation: gradientShift 15s ease-in-out infinite;
     z-index: -1;
     pointer-events: none;
-    will-change: transform;
+    will-change: transform, background-position;
   }
   body::after {
     content: '';
     position: fixed;
-    top: -25%; left: -25%;
-    width: 150%; height: 150%;
-    background:
-      radial-gradient(600px 400px at 30% 50%, rgba(34,211,238,0.10), transparent 60%),
-      radial-gradient(700px 500px at 80% 70%, rgba(124,92,255,0.10), transparent 60%);
-    animation: bgDrift2 28s ease-in-out infinite alternate;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: 
+      radial-gradient(ellipse at 70% 20%, rgba(34,211,238,0.25) 0%, transparent 50%),
+      radial-gradient(ellipse at 20% 60%, rgba(124,92,255,0.30) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 90%, rgba(124,92,255,0.20) 0%, transparent 50%);
+    animation: gradientShift2 20s ease-in-out infinite;
     z-index: -1;
     pointer-events: none;
-    will-change: transform;
+    will-change: transform, background-position;
   }
-  @keyframes bgDrift {
-    0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
-    33%  { transform: translate(4%, -3%) rotate(2deg) scale(1.05); }
-    66%  { transform: translate(-3%, 4%) rotate(-1deg) scale(1.03); }
-    100% { transform: translate(2%, 2%) rotate(1deg) scale(1.06); }
+  @keyframes gradientShift {
+    0%, 100% { 
+      transform: translate(0, 0) rotate(0deg) scale(1);
+      background-position: 0% 0%;
+    }
+    25% { 
+      transform: translate(5%, -5%) rotate(3deg) scale(1.1);
+      background-position: 100% 0%;
+    }
+    50% { 
+      transform: translate(-3%, 5%) rotate(-2deg) scale(1.05);
+      background-position: 100% 100%;
+    }
+    75% { 
+      transform: translate(3%, 3%) rotate(2deg) scale(1.08);
+      background-position: 0% 100%;
+    }
   }
-  @keyframes bgDrift2 {
-    0%   { transform: translate(0, 0) scale(1); }
-    50%  { transform: translate(-5%, 3%) scale(1.08); }
-    100% { transform: translate(3%, -4%) scale(1.04); }
+  @keyframes gradientShift2 {
+    0%, 100% { 
+      transform: translate(0, 0) rotate(0deg) scale(1);
+      background-position: 0% 0%;
+    }
+    33% { 
+      transform: translate(-6%, 4%) rotate(-4deg) scale(1.12);
+      background-position: 50% 100%;
+    }
+    66% { 
+      transform: translate(4%, -6%) rotate(3deg) scale(1.08);
+      background-position: 100% 50%;
+    }
   }
+
   .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; position: relative; }
   header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
   .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
@@ -77,20 +102,82 @@
   .dropzone .title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
   .dropzone .sub { color: var(--muted); font-size: 13px; }
   .formats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; }
+  
+  /* ═══ КНОПКИ ФОРМАТОВ С АНИМАЦИЕЙ ═══ */
   .format-btn {
-    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
-    padding: 12px 8px; border-radius: 10px; font-family: 'JetBrains Mono', monospace;
-    font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;
-    text-transform: uppercase; position: relative;
+    background: var(--panel-2); 
+    border: 1px solid var(--border); 
+    color: var(--text);
+    padding: 12px 8px; 
+    border-radius: 10px; 
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase; 
+    position: relative;
+    overflow: hidden;
   }
-  .format-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
-  .format-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: white; box-shadow: 0 6px 18px rgba(124,92,255,0.35); }
+  .format-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(124, 92, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+  .format-btn:active::before {
+    width: 300px;
+    height: 300px;
+  }
+  .format-btn:hover { 
+    border-color: var(--accent); 
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124,92,255,0.2);
+  }
+  .format-btn:active {
+    transform: translateY(0) scale(0.95);
+    transition: transform 0.1s;
+  }
+  .format-btn.active { 
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); 
+    border-color: transparent; 
+    color: white; 
+    box-shadow: 0 6px 18px rgba(124,92,255,0.35);
+    animation: btnActivate 0.4s ease;
+  }
+  @keyframes btnActivate {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
   .quality-row, .ico-size-row { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
   .quality-row label, .ico-size-row label { font-size: 13px; color: var(--muted); min-width: 100px; }
   .quality-row input[type="range"], .ico-size-row input[type="range"] { flex: 1; accent-color: var(--accent); }
   .quality-row .val, .ico-size-row .val { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text); min-width: 70px; text-align: right; }
   .ico-size-row { display: none; animation: slideDown 0.25s ease; }
   .ico-size-row.show { display: flex; }
+  .ico-custom-input {
+    width: 70px;
+    padding: 4px 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    text-align: center;
+  }
+  .ico-custom-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
   @keyframes slideDown {
     from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -106,6 +193,8 @@
   .file-list::-webkit-scrollbar { width: 8px; }
   .file-list::-webkit-scrollbar-track { background: transparent; }
   .file-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  
+  /* ═══ АНИМАЦИЯ ФАЙЛОВ ═══ */
   .file-item {
     display: flex;
     align-items: center;
@@ -115,24 +204,33 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     transition:
-      opacity 0.3s ease,
-      transform 0.3s ease,
-      max-height 0.35s ease,
-      padding 0.35s ease,
-      margin 0.35s ease,
-      border-width 0.35s ease;
+      opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      padding 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      margin 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      border-width 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     max-height: 200px;
     overflow: hidden;
-    animation: fileAppear 0.35s ease;
+    animation: fileAppear 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
   @keyframes fileAppear {
-    from { opacity: 0; transform: translateX(-20px); }
-    to   { opacity: 1; transform: translateX(0); }
+    from { 
+      opacity: 0; 
+      transform: translateX(-30px) scale(0.9);
+      filter: blur(4px);
+    }
+    to   { 
+      opacity: 1; 
+      transform: translateX(0) scale(1);
+      filter: blur(0);
+    }
   }
   .file-item:hover { border-color: #353c4f; }
   .file-item.removing {
     opacity: 0;
-    transform: translateX(40px) scale(0.95);
+    transform: translateX(-50px) scale(0.8) rotate(-5deg);
     max-height: 0;
     padding-top: 0;
     padding-bottom: 0;
@@ -140,7 +238,9 @@
     margin-bottom: -8px;
     border-width: 0;
     pointer-events: none;
+    filter: blur(8px);
   }
+
   .thumb { width: 44px; height: 44px; border-radius: 8px; background: #0b0d12; flex-shrink: 0; overflow: hidden; display: grid; place-items: center; }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
   .file-info { flex: 1; min-width: 0; }
@@ -229,8 +329,9 @@
       </div>
       <div class="ico-size-row" id="icoSizeRow">
         <label>Размер иконки</label>
-        <input type="range" id="icoSize" min="16" max="256" step="16" value="256" />
+        <input type="range" id="icoSize" min="16" max="512" step="16" value="256" />
         <span class="val" id="icoSizeVal">256×256</span>
+        <input type="number" id="icoSizeCustom" class="ico-custom-input" min="16" max="1024" placeholder="свой" />
       </div>
       <div class="format-note" id="formatNote"></div>
       <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
@@ -281,7 +382,7 @@
   const convertBtn = $('convertBtn'), downloadAllBtn = $('downloadAllBtn'), clearBtn = $('clearBtn');
   const progressBar = $('progressBar'), progressFill = $('progressFill');
   const formatNote = $('formatNote'), avifBtn = $('avifBtn');
-  const icoSizeRow = $('icoSizeRow'), icoSizeInput = $('icoSize'), icoSizeVal = $('icoSizeVal');
+  const icoSizeRow = $('icoSizeRow'), icoSizeInput = $('icoSize'), icoSizeVal = $('icoSizeVal'), icoSizeCustom = $('icoSizeCustom');
   const toast = $('toast'), toastText = toast.querySelector('.toast-text');
   const formatBtns = document.querySelectorAll('.format-btn');
 
@@ -432,8 +533,15 @@
     downloadAllBtn.disabled = !files.some(f => f.status === 'done');
   };
 
+  const getIcoSize = () => {
+    const custom = parseInt(icoSizeCustom.value);
+    if (custom && custom >= 16 && custom <= 1024) return custom;
+    return parseInt(icoSizeInput.value);
+  };
+
   const updateFormatNote = () => {
     formatNote.classList.remove('show', 'info');
+    const icoSize = getIcoSize();
     const notes = {
       avif: avifNativeSupported
         ? 'ℹ️ AVIF кодируется нативно вашим браузером (быстро).'
@@ -443,7 +551,7 @@
       tiff: 'ℹ️ TIFF сохраняет без потерь. Файлы могут быть большими.',
       gif: 'ℹ️ GIF поддерживает до 256 цветов. Для фотографий качество может снизиться.',
       bmp: 'ℹ️ BMP сохраняет без сжатия. Файлы будут большими.',
-      ico: `ℹ️ ICO создаёт иконку ${icoSizeInput.value}×${icoSizeInput.value} из PNG-данных.`
+      ico: `ℹ️ ICO создаёт иконку ${icoSize}×${icoSize} из PNG-данных.`
     };
     if (notes[selectedFormat]) {
       formatNote.textContent = notes[selectedFormat];
@@ -537,7 +645,7 @@
         if (f?.thumbUrl) URL.revokeObjectURL(f.thumbUrl);
         files = files.filter(x => x.id !== id);
         renderFiles();
-      }, 350);
+      }, 400);
     }
   };
 
@@ -697,7 +805,7 @@
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         outputBlob = encodeBMP(imageData);
       } else if (selectedFormat === 'ico') {
-        const icoSize = parseInt(icoSizeInput.value);
+        const icoSize = getIcoSize();
         const img = await loadImageFromBlob(sourceBlob);
         const canvas = document.createElement('canvas');
         canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
@@ -764,13 +872,13 @@
   const clearAll = () => {
     const items = fileList.querySelectorAll('.file-item');
     items.forEach((item, i) => {
-      setTimeout(() => item.classList.add('removing'), i * 30);
+      setTimeout(() => item.classList.add('removing'), i * 40);
     });
     setTimeout(() => {
       files.forEach(f => { if (f.thumbUrl) URL.revokeObjectURL(f.thumbUrl); });
       files = [];
       renderFiles();
-    }, items.length * 30 + 350);
+    }, items.length * 40 + 400);
   };
 
   dropzone.addEventListener('click', () => fileInput.click());
@@ -792,8 +900,16 @@
 
   qualityInput.addEventListener('input', () => { qualityVal.textContent = qualityInput.value + '%'; });
   icoSizeInput.addEventListener('input', () => {
+    icoSizeCustom.value = '';
     icoSizeVal.textContent = `${icoSizeInput.value}×${icoSizeInput.value}`;
     updateFormatNote();
+  });
+  icoSizeCustom.addEventListener('input', () => {
+    const val = parseInt(icoSizeCustom.value);
+    if (val && val >= 16 && val <= 1024) {
+      icoSizeVal.textContent = `${val}×${val}`;
+      updateFormatNote();
+    }
   });
 
   convertBtn.addEventListener('click', convertAll);
